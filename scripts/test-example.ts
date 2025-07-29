@@ -1,4 +1,4 @@
-import { convertToMarkdown, parseReviewComment, ReviewComment } from "../src/util/regexp.js";
+import { convertToMarkdown, parseReviewComment, ReviewComment } from "../src/util/reviewCommentParser.js";
 
 const testLines: string[] = [
   'src/extension.ts:7 "Make this function name simpler and clearer"',

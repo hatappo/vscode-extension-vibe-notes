@@ -106,15 +106,16 @@ function convertToMarkdown(comments: ReviewComment[]): string {
   
   for (const [filePath, fileComments] of Object.entries(groupedByFile)) {
     // File path header
-    markdownSections.push(`## ${filePath}`);
+    markdownSections.push(`## [${filePath}](${filePath})`);
     markdownSections.push('');
     
     // Each comment
     for (const comment of fileComments) {
       // Line number header
-      const lineHeader = comment.startLine === comment.endLine
-        ? `### line: ${comment.startLine}`
-        : `### line: ${comment.startLine}-${comment.endLine}`;
+      const lineText = comment.startLine === comment.endLine
+        ? `line: ${comment.startLine}`
+        : `line: ${comment.startLine}-${comment.endLine}`;
+      const lineHeader = `### [${lineText}](${comment.filePath}:${comment.startLine})`;
       
       markdownSections.push(lineHeader);
       markdownSections.push('');
