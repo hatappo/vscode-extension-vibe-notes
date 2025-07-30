@@ -76,6 +76,23 @@ export async function activate(context: vscode.ExtensionContext) {
 		return memoHandlers.get(workspaceFolder.uri.fsPath);
 	};
 
+	// Get handler for copy operations (fallback to first workspace if no active editor)
+	const getHandlerForCopy = (): MemoFileHandler | undefined => {
+		// First try to get handler based on active editor
+		const handler = getCurrentHandler();
+		if (handler) {
+			return handler;
+		}
+
+		// If no active editor, use first workspace
+		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			const firstWorkspace = vscode.workspace.workspaceFolders[0];
+			return memoHandlers.get(firstWorkspace.uri.fsPath);
+		}
+
+		return undefined;
+	};
+
 	// Update UI components after comment changes
 	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
 		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
@@ -156,7 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Command: Copy as raw
 	const copyRawCommand = vscode.commands.registerCommand('shadow-comments.copyRaw', async () => {
-		const handler = getCurrentHandler();
+		const handler = getHandlerForCopy();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
 			return;
@@ -166,7 +183,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Command: Copy as markdown
 	const copyMarkdownCommand = vscode.commands.registerCommand('shadow-comments.copyMarkdown', async () => {
-		const handler = getCurrentHandler();
+		const handler = getHandlerForCopy();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
 			return;
@@ -176,7 +193,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Command: Copy as JSON
 	const copyJsonCommand = vscode.commands.registerCommand('shadow-comments.copyJson', async () => {
-		const handler = getCurrentHandler();
+		const handler = getHandlerForCopy();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
 			return;
