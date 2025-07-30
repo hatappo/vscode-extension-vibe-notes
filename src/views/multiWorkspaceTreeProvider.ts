@@ -146,7 +146,7 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
       
       // Add command to navigate to comment location
       item.command = {
-        command: 'vscode-extension-vibe-letter.goToComment',
+        command: 'shadow-comments.goToComment',
         title: 'Go to Comment',
         arguments: [comment, data.workspaceFolder]
       };
