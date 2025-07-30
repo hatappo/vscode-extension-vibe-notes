@@ -6,4 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.2] - 2025-07-31
+
+### Fixed
+- .local.comments.txt file is now created only when adding the first comment
+- No longer creates empty files in repositories just by having the extension installed
+
+## [0.0.1] - 2025-07-31
+
+### Added
 - Initial release
+- Add/edit/delete comments via context menu and CodeLens
+- Visual indicators with C-shaped arc in editor gutter
+- Comments tree view in side panel
+- Export comments in multiple formats (Raw/Markdown/JSON)
+- Git Notes integration for permanent storage
+- Multi-workspace support
+- File watching for automatic updates
