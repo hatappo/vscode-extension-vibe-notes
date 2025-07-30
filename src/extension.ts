@@ -5,6 +5,7 @@ import * as path from 'path';
 import { MemoFileHandler } from './util/memoFileHandler';
 import { CommentDecorationProvider } from './decorations/commentDecorationProvider';
 import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
+import { ReviewComment } from './util/reviewCommentParser';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -39,21 +40,15 @@ export async function activate(context: vscode.ExtensionContext) {
 			// Set up file watcher
 			const watcher = handler.getFileWatcher();
 			if (watcher) {
-				watcher.onDidChange(async () => {
+				const handleFileChange = async () => {
 					await decorationProvider.updateDecorations();
 					await treeProvider.loadAllComments();
 					treeProvider.refresh();
-				});
-				watcher.onDidCreate(async () => {
-					await decorationProvider.updateDecorations();
-					await treeProvider.loadAllComments();
-					treeProvider.refresh();
-				});
-				watcher.onDidDelete(async () => {
-					await decorationProvider.updateDecorations();
-					await treeProvider.loadAllComments();
-					treeProvider.refresh();
-				});
+				};
+
+				watcher.onDidChange(handleFileChange);
+				watcher.onDidCreate(handleFileChange);
+				watcher.onDidDelete(handleFileChange);
 			}
 		}
 		
@@ -79,6 +74,48 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		return memoHandlers.get(workspaceFolder.uri.fsPath);
+	};
+
+	// Update UI components after comment changes
+	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
+		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+		if (decorationProvider) {
+			await decorationProvider.updateDecorations();
+		}
+		
+		await treeProvider.loadAllComments();
+		treeProvider.refresh();
+	};
+
+	// Find comment at current cursor position
+	const findCommentAtCursor = async (): Promise<{ comment: ReviewComment | undefined, handler: MemoFileHandler | undefined, workspaceFolder: vscode.WorkspaceFolder | undefined }> => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+		}
+
+		const handler = getCurrentHandler();
+		if (!handler) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+		}
+
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+		if (!workspaceFolder) {
+			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
+		const currentLine = editor.selection.active.line + 1;
+		
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			currentLine >= c.startLine && 
+			currentLine <= c.endLine
+		);
+
+		return { comment, handler, workspaceFolder };
 	};
 
 	// Command: Add comment to line
@@ -113,14 +150,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			await handler.addComment(relativePath, startLine, endLine, comment);
 			
 			// Update decorations and tree view
-			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-			if (decorationProvider) {
-				await decorationProvider.updateDecorations();
-			}
-			
-			// Update tree view
-			await treeProvider.loadAllComments();
-			treeProvider.refresh();
+			await updateUIComponents(workspaceFolder);
 		}
 	});
 
@@ -179,35 +209,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Command: Edit comment at current position
 	const editCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.editCommentAtCursor', async () => {
-		const editor = vscode.window.activeTextEditor;
-		if (!editor) {
-			return;
-		}
-
-		const handler = getCurrentHandler();
-		if (!handler) {
-			vscode.window.showErrorMessage('No workspace folder found');
-			return;
-		}
-
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-		if (!workspaceFolder) {
-			return;
-		}
-
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
-		const currentLine = editor.selection.active.line + 1;
+		const { comment, handler, workspaceFolder } = await findCommentAtCursor();
 		
-		// Find comment at current line
-		const comments = await handler.readComments();
-		const comment = comments.find(c => 
-			c.filePath === relativePath && 
-			currentLine >= c.startLine && 
-			currentLine <= c.endLine
-		);
-
-		if (!comment) {
-			vscode.window.showInformationMessage('No comment found at current line');
+		if (!comment || !handler || !workspaceFolder) {
+			if (comment === undefined && handler && workspaceFolder) {
+				vscode.window.showInformationMessage('No comment found at current line');
+			}
 			return;
 		}
 
@@ -220,49 +227,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (newComment !== undefined && newComment !== comment.comment) {
 			await handler.updateComment(comment, newComment);
-			
-			// Update decorations and tree view
-			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-			if (decorationProvider) {
-				await decorationProvider.updateDecorations();
-			}
-			
-			await treeProvider.loadAllComments();
-			treeProvider.refresh();
+			await updateUIComponents(workspaceFolder);
 		}
 	});
 
 	// Command: Delete comment at current position
 	const deleteCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.deleteCommentAtCursor', async () => {
-		const editor = vscode.window.activeTextEditor;
-		if (!editor) {
-			return;
-		}
-
-		const handler = getCurrentHandler();
-		if (!handler) {
-			vscode.window.showErrorMessage('No workspace folder found');
-			return;
-		}
-
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-		if (!workspaceFolder) {
-			return;
-		}
-
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
-		const currentLine = editor.selection.active.line + 1;
+		const { comment, handler, workspaceFolder } = await findCommentAtCursor();
 		
-		// Find comment at current line
-		const comments = await handler.readComments();
-		const comment = comments.find(c => 
-			c.filePath === relativePath && 
-			currentLine >= c.startLine && 
-			currentLine <= c.endLine
-		);
-
-		if (!comment) {
-			vscode.window.showInformationMessage('No comment found at current line');
+		if (!comment || !handler || !workspaceFolder) {
+			if (comment === undefined && handler && workspaceFolder) {
+				vscode.window.showInformationMessage('No comment found at current line');
+			}
 			return;
 		}
 
@@ -275,15 +251,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (confirmation === 'Delete') {
 			await handler.deleteComment(comment);
-			
-			// Update decorations and tree view
-			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-			if (decorationProvider) {
-				await decorationProvider.updateDecorations();
-			}
-			
-			await treeProvider.loadAllComments();
-			treeProvider.refresh();
+			await updateUIComponents(workspaceFolder);
 		}
 	});
 

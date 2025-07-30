@@ -36,6 +36,31 @@ export class MemoFileHandler {
   }
   
   /**
+   * Format line specification
+   */
+  private formatLineSpec(startLine: number, endLine: number, startColumn?: number, endColumn?: number): string {
+    if (startLine === endLine) {
+      return startColumn !== undefined ? `${startLine},${startColumn}` : `${startLine}`;
+    } else {
+      if (startColumn !== undefined && endColumn !== undefined) {
+        return `${startLine},${startColumn}-${endLine},${endColumn}`;
+      } else {
+        return `${startLine}-${endLine}`;
+      }
+    }
+  }
+  
+  /**
+   * Escape comment text for storage
+   */
+  private escapeComment(comment: string): string {
+    return comment
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n');
+  }
+  
+  /**
    * Read all comments from the memo file
    */
   async readComments(): Promise<ReviewComment[]> {
@@ -66,21 +91,8 @@ export class MemoFileHandler {
       const content = await fs.readFile(this.memoFilePath, 'utf8');
       
       // Format the new comment with new format
-      let lineSpec: string;
-      if (startLine === endLine) {
-        lineSpec = startColumn !== undefined ? `${startLine},${startColumn}` : `${startLine}`;
-      } else {
-        if (startColumn !== undefined && endColumn !== undefined) {
-          lineSpec = `${startLine},${startColumn}-${endLine},${endColumn}`;
-        } else {
-          lineSpec = `${startLine}-${endLine}`;
-        }
-      }
-      
-      const escapedComment = comment
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n');
+      const lineSpec = this.formatLineSpec(startLine, endLine, startColumn, endColumn);
+      const escapedComment = this.escapeComment(comment);
       const newLine = `${filePath}#L${lineSpec} "${escapedComment}"`;
       
       // Append to file
@@ -104,20 +116,8 @@ export class MemoFileHandler {
       // Find and replace the line
       const updatedLines = lines.map(line => {
         if (line.trim() === oldComment.raw) {
-          let lineSpec: string;
-          if (oldComment.startLine === oldComment.endLine) {
-            lineSpec = oldComment.startColumn !== undefined ? `${oldComment.startLine},${oldComment.startColumn}` : `${oldComment.startLine}`;
-          } else {
-            if (oldComment.startColumn !== undefined && oldComment.endColumn !== undefined) {
-              lineSpec = `${oldComment.startLine},${oldComment.startColumn}-${oldComment.endLine},${oldComment.endColumn}`;
-            } else {
-              lineSpec = `${oldComment.startLine}-${oldComment.endLine}`;
-            }
-          }
-          const escapedComment = newCommentText
-            .replace(/\\/g, '\\\\')
-            .replace(/"/g, '\\"')
-            .replace(/\n/g, '\\n');
+          const lineSpec = this.formatLineSpec(oldComment.startLine, oldComment.endLine, oldComment.startColumn, oldComment.endColumn);
+          const escapedComment = this.escapeComment(newCommentText);
           return `${oldComment.filePath}#L${lineSpec} "${escapedComment}"`;
         }
         return line;
