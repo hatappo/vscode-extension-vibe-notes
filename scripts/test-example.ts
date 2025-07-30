@@ -1,9 +1,11 @@
 import { convertToMarkdown, parseReviewComment, ReviewComment } from "../src/util/reviewCommentParser";
 
 const testLines: string[] = [
-  'src/extension.ts:7 "Make this function name simpler and clearer"',
-  'src/extension.ts:13-15 "These comments are unnecessary.\\nPlease remove them."',
-  'src/test/extension.test.ts:11 "Please add an explanation. Change quotes from \\"\\\" to \'\'."'
+  'src/extension.ts#L7 "Make this function name simpler and clearer"',
+  'src/extension.ts#L7,10 "Column 10 needs attention"',
+  'src/extension.ts#L13-15 "These comments are unnecessary.\\nPlease remove them."',
+  'src/extension.ts#L7,10-8,12 "This range needs refactoring"',
+  'src/test/extension.test.ts#L11 "Please add an explanation. Change quotes from \\"\\\" to \'\'."'
 ];
 
 testLines.forEach((line: string) => {

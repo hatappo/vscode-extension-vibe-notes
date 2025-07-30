@@ -60,18 +60,28 @@ export class MemoFileHandler {
   /**
    * Add a new comment to the memo file
    */
-  async addComment(filePath: string, startLine: number, endLine: number, comment: string): Promise<void> {
+  async addComment(filePath: string, startLine: number, endLine: number, comment: string, startColumn?: number, endColumn?: number): Promise<void> {
     try {
       // Read existing content
       const content = await fs.readFile(this.memoFilePath, 'utf8');
       
-      // Format the new comment
-      const lineSpec = startLine === endLine ? `${startLine}` : `${startLine}-${endLine}`;
+      // Format the new comment with new format
+      let lineSpec: string;
+      if (startLine === endLine) {
+        lineSpec = startColumn !== undefined ? `${startLine},${startColumn}` : `${startLine}`;
+      } else {
+        if (startColumn !== undefined && endColumn !== undefined) {
+          lineSpec = `${startLine},${startColumn}-${endLine},${endColumn}`;
+        } else {
+          lineSpec = `${startLine}-${endLine}`;
+        }
+      }
+      
       const escapedComment = comment
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n');
-      const newLine = `${filePath}:${lineSpec} "${escapedComment}"`;
+      const newLine = `${filePath}#L${lineSpec} "${escapedComment}"`;
       
       // Append to file
       const newContent = content.trim() ? `${content.trim()}\n${newLine}\n` : `${newLine}\n`;
@@ -94,14 +104,21 @@ export class MemoFileHandler {
       // Find and replace the line
       const updatedLines = lines.map(line => {
         if (line.trim() === oldComment.raw) {
-          const lineSpec = oldComment.startLine === oldComment.endLine 
-            ? `${oldComment.startLine}` 
-            : `${oldComment.startLine}-${oldComment.endLine}`;
+          let lineSpec: string;
+          if (oldComment.startLine === oldComment.endLine) {
+            lineSpec = oldComment.startColumn !== undefined ? `${oldComment.startLine},${oldComment.startColumn}` : `${oldComment.startLine}`;
+          } else {
+            if (oldComment.startColumn !== undefined && oldComment.endColumn !== undefined) {
+              lineSpec = `${oldComment.startLine},${oldComment.startColumn}-${oldComment.endLine},${oldComment.endColumn}`;
+            } else {
+              lineSpec = `${oldComment.startLine}-${oldComment.endLine}`;
+            }
+          }
           const escapedComment = newCommentText
             .replace(/\\/g, '\\\\')
             .replace(/"/g, '\\"')
             .replace(/\n/g, '\\n');
-          return `${oldComment.filePath}:${lineSpec} "${escapedComment}"`;
+          return `${oldComment.filePath}#L${lineSpec} "${escapedComment}"`;
         }
         return line;
       });

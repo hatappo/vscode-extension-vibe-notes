@@ -3,6 +3,8 @@ interface ReviewComment {
   filePath: string;
   startLine: number;
   endLine: number;
+  startColumn?: number;  // Optional column position
+  endColumn?: number;    // Optional column position
   comment: string;
   raw: string;  // Holds the entire original line
 }
@@ -22,14 +24,24 @@ interface ParseError {
 }
 
 /** Regular expression for parsing review comments */
-const reviewLineRegex: RegExp = /^(.+?):(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+// Matches: file.ts#L7 or file.ts#L7,10 or file.ts#L7-9 or file.ts#L7,10-8,12
+const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:,\d+)?(?:-\d+(?:,\d+)?)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+
+/** Parse position (line and optional column) */
+function parsePosition(pos: string): { line: number; column?: number } {
+  const parts = pos.split(',');
+  return {
+    line: Number(parts[0]),
+    column: parts[1] ? Number(parts[1]) : undefined
+  };
+}
 
 /** Parse a single line review comment */
 function parseReviewComment(line: string): ReviewComment | null {
   const match = line.match(reviewLineRegex);
   if (!match) {return null;}
   
-  const [, filePath, lineSpec, rawComment] = match;
+  const [, filePath, positionSpec, rawComment] = match;
   
   // Unescape the comment
   const comment = rawComment
@@ -37,15 +49,37 @@ function parseReviewComment(line: string): ReviewComment | null {
     .replace(/\\"/g, '"')
     .replace(/\\\\/g, '\\');
   
-  // Parse line numbers
-  const lineNumbers = lineSpec.includes('-')
-    ? lineSpec.split('-').map(Number)
-    : [Number(lineSpec), Number(lineSpec)];
+  // Parse positions
+  let startLine: number;
+  let endLine: number;
+  let startColumn: number | undefined;
+  let endColumn: number | undefined;
+  
+  if (positionSpec.includes('-')) {
+    // Range: L7-9 or L7,10-8,12
+    const [startPos, endPos] = positionSpec.split('-');
+    const start = parsePosition(startPos);
+    const end = parsePosition(endPos);
+    
+    startLine = start.line;
+    startColumn = start.column;
+    endLine = end.line;
+    endColumn = end.column;
+  } else {
+    // Single position: L7 or L7,10
+    const pos = parsePosition(positionSpec);
+    startLine = pos.line;
+    startColumn = pos.column;
+    endLine = pos.line;
+    endColumn = pos.column;
+  }
   
   return {
     filePath,
-    startLine: lineNumbers[0],
-    endLine: lineNumbers[1],
+    startLine,
+    endLine,
+    startColumn,
+    endColumn,
     comment,
     raw: line  // Holds the entire original line
   };
@@ -112,10 +146,26 @@ function convertToMarkdown(comments: ReviewComment[]): string {
     // Each comment
     for (const comment of fileComments) {
       // Line number header
-      const lineText = comment.startLine === comment.endLine
-        ? `line: ${comment.startLine}`
-        : `line: ${comment.startLine}-${comment.endLine}`;
-      const lineHeader = `### [${lineText}](${comment.filePath}:${comment.startLine})`;
+      let lineText: string;
+      let linkTarget: string;
+      
+      if (comment.startLine === comment.endLine) {
+        if (comment.startColumn !== undefined) {
+          lineText = `line: ${comment.startLine}:${comment.startColumn}`;
+        } else {
+          lineText = `line: ${comment.startLine}`;
+        }
+        linkTarget = `${comment.filePath}#L${comment.startLine}`;
+      } else {
+        if (comment.startColumn !== undefined && comment.endColumn !== undefined) {
+          lineText = `line: ${comment.startLine}:${comment.startColumn}-${comment.endLine}:${comment.endColumn}`;
+        } else {
+          lineText = `line: ${comment.startLine}-${comment.endLine}`;
+        }
+        linkTarget = `${comment.filePath}#L${comment.startLine}`;
+      }
+      
+      const lineHeader = `### [${lineText}](${linkTarget})`;
       
       markdownSections.push(lineHeader);
       markdownSections.push('');

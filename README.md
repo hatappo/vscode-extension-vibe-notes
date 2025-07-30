@@ -35,10 +35,18 @@ Use the Command Palette (Cmd/Ctrl+Shift+P) to access:
 Comments are stored in `.local.memo.txt` in your workspace root:
 
 ```
-src/extension.ts:7 "Make this function name simpler and clearer"
-src/extension.ts:13-15 "These comments are unnecessary.\nPlease remove them."
-src/test/extension.test.ts:11 "Please add an explanation."
+src/extension.ts#L7 "Make this function name simpler and clearer"
+src/extension.ts#L7,10 "Column 10 needs attention"
+src/extension.ts#L13-15 "These comments are unnecessary.\nPlease remove them."
+src/extension.ts#L7,10-8,12 "This range needs refactoring"
+src/test/extension.test.ts#L11 "Please add an explanation."
 ```
+
+Format: `filepath#L<line>[,<column>][-<endline>[,<endcolumn>]] "comment"`
+- Column positions are optional
+- Single line: `#L7` or `#L7,10` 
+- Line range: `#L13-15`
+- Range with columns: `#L7,10-8,12`
 
 ### Markdown Output Example
 
@@ -47,11 +55,15 @@ When copying as markdown, you get formatted output with clickable links:
 ```markdown
 ## [src/extension.ts](src/extension.ts)
 
-### [line: 7](src/extension.ts:7)
+### [line: 7](src/extension.ts#L7)
 
 Make this function name simpler and clearer
 
-### [line: 13-15](src/extension.ts:13)
+### [line: 7:10](src/extension.ts#L7)
+
+Column 10 needs attention
+
+### [line: 13-15](src/extension.ts#L13)
 
 These comments are unnecessary.
 Please remove them.
