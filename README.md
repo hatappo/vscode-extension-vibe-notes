@@ -138,10 +138,6 @@ Initial release with core functionality:
 - Support for #L notation with optional column positions
 - Git Notes integration for permanent storage
 
-## Development
-
-See [docs/dev](./docs/dev) for development documentation.
-
 ## Notes
 
 - The `.local.comments.txt` file is automatically added to `.gitignore`
