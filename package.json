@@ -59,6 +59,11 @@
         "command": "shadow-comments.openCommentsFile",
         "title": "Open Comments File",
         "icon": "$(file-text)"
+      },
+      {
+        "command": "shadow-comments.syncToGitNotes",
+        "title": "Sync to Git Notes",
+        "icon": "$(cloud-upload)"
       }
     ],
     "menus": {
@@ -91,19 +96,24 @@
           "group": "navigation@1"
         },
         {
-          "command": "shadow-comments.copyRaw",
+          "command": "shadow-comments.syncToGitNotes",
           "when": "view == shadowCommentsView",
           "group": "navigation@2"
         },
         {
-          "command": "shadow-comments.copyMarkdown",
+          "command": "shadow-comments.copyRaw",
           "when": "view == shadowCommentsView",
           "group": "navigation@3"
         },
         {
-          "command": "shadow-comments.copyJson",
+          "command": "shadow-comments.copyMarkdown",
           "when": "view == shadowCommentsView",
           "group": "navigation@4"
+        },
+        {
+          "command": "shadow-comments.copyJson",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@5"
         }
       ]
     },

@@ -165,11 +165,19 @@ export class MemoFileHandler {
   }
   
   /**
+   * Get raw content
+   */
+  async getRawContent(): Promise<string> {
+    const content = await fs.readFile(this.memoFilePath, 'utf8');
+    return content;
+  }
+  
+  /**
    * Copy raw content to clipboard
    */
   async copyRawContent(): Promise<void> {
     try {
-      const content = await fs.readFile(this.memoFilePath, 'utf8');
+      const content = await this.getRawContent();
       await vscode.env.clipboard.writeText(content);
       vscode.window.showInformationMessage('Raw content copied to clipboard');
     } catch (error) {
@@ -178,12 +186,19 @@ export class MemoFileHandler {
   }
   
   /**
+   * Get content as markdown
+   */
+  async getMarkdownContent(): Promise<string> {
+    const comments = await this.readComments();
+    return convertToMarkdown(comments);
+  }
+  
+  /**
    * Copy content as markdown to clipboard
    */
   async copyAsMarkdown(): Promise<void> {
     try {
-      const comments = await this.readComments();
-      const markdown = convertToMarkdown(comments);
+      const markdown = await this.getMarkdownContent();
       await vscode.env.clipboard.writeText(markdown);
       vscode.window.showInformationMessage('Markdown content copied to clipboard');
     } catch (error) {

@@ -51,6 +51,7 @@ You can export comments in three ways:
 1. **Quick Actions**: Use the icon buttons in the Comments tree view title bar:
    - 🔄 Refresh - Reload comments from file
    - 📄 Open File - Open .local.comments.txt in editor
+   - ☁️ Sync to Git - Save comments to git notes
    - 📄 Copy as Raw
    - 📝 Copy as Markdown  
    - {} Copy as JSON
@@ -59,6 +60,15 @@ You can export comments in three ways:
    - `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
    - `Copy Comments as Markdown`: Copy formatted markdown with clickable links
    - `Copy Comments as JSON`: Copy comments as JSON structure
+
+### Git Notes Integration
+
+You can sync your comments to Git Notes for permanent storage in your repository:
+
+1. Click the ☁️ "Sync to Git" button in the Comments tree view
+2. Comments are saved to the current HEAD commit's git notes
+3. Share with team using `git push --push-notes`
+4. View notes with `git notes show`
 
 ### Storage Format
 
@@ -126,6 +136,7 @@ Initial release with core functionality:
 - Copy comments in multiple formats (Raw/Markdown/JSON)
 - File watching for automatic updates
 - Support for #L notation with optional column positions
+- Git Notes integration for permanent storage
 
 ## Development
 

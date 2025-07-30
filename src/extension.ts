@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { MemoFileHandler } from './util/memoFileHandler';
 import { CommentDecorationProvider } from './decorations/commentDecorationProvider';
 import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
@@ -392,6 +394,55 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Command: Sync to Git Notes
+	const syncToGitNotesCommand = vscode.commands.registerCommand('shadow-comments.syncToGitNotes', async () => {
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return;
+		}
+
+		// Check if it's a git repository
+		const gitDir = path.join(workspaceFolder.uri.fsPath, '.git');
+		try {
+			await vscode.workspace.fs.stat(vscode.Uri.file(gitDir));
+		} catch {
+			vscode.window.showErrorMessage('Not a git repository');
+			return;
+		}
+
+		// Get the handler for the workspace
+		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		if (!handler) {
+			vscode.window.showErrorMessage('No memo handler found');
+			return;
+		}
+
+		try {
+			// Read the current comments
+			const comments = await handler.readComments();
+			if (comments.length === 0) {
+				vscode.window.showInformationMessage('No comments to sync');
+				return;
+			}
+
+			// Get the raw content
+			const content = await handler.getRawContent();
+
+			// Execute git notes command
+			const execAsync = promisify(exec);
+
+			// Add notes to current HEAD commit
+			await execAsync(`git notes add -f -m "${content.replace(/"/g, '\\"')}"`, {
+				cwd: workspaceFolder.uri.fsPath
+			});
+
+			vscode.window.showInformationMessage('Comments synced to git notes');
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to sync to git notes: ${error}`);
+		}
+	});
+
 	// Register all commands
 	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
@@ -405,7 +456,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		editCommentAtLineCommand,
 		deleteCommentAtLineCommand,
 		refreshTreeCommand,
-		openCommentsFileCommand
+		openCommentsFileCommand,
+		syncToGitNotesCommand
 	);
 	console.log('[Shadow Comments] Extension activation completed!');
 	
