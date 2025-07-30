@@ -10,8 +10,8 @@ import { ReviewComment } from './util/reviewCommentParser';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	console.log('[Vibe Letter] Extension activation started!');
-	console.log('[Vibe Letter] Context:', context.extensionPath);
+	console.log('[Shadow Comments] Extension activation started!');
+	console.log('[Shadow Comments] Context:', context.extensionPath);
 
 	// Initialize memo file handlers and decoration providers for each workspace
 	const memoHandlers = new Map<string, MemoFileHandler>();
@@ -54,7 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		
 		// Register tree view after all workspaces are initialized
 		await treeProvider.loadAllComments();
-		const treeView = vscode.window.createTreeView('vibeLetterComments', {
+		const treeView = vscode.window.createTreeView('shadowCommentsView', {
 			treeDataProvider: treeProvider,
 			showCollapseAll: true
 		});
@@ -119,9 +119,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	// Command: Add comment to line
-	console.log('[Vibe Letter] Registering addComment command...');
-	const addCommentCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.addComment', async () => {
-		console.log('[Vibe Letter] addComment command triggered!');
+	console.log('[Shadow Comments] Registering addComment command...');
+	const addCommentCommand = vscode.commands.registerCommand('shadow-comments.addComment', async () => {
+		console.log('[Shadow Comments] addComment command triggered!');
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
 			vscode.window.showErrorMessage('No active editor');
@@ -155,7 +155,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Copy as raw
-	const copyRawCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.copyRaw', async () => {
+	const copyRawCommand = vscode.commands.registerCommand('shadow-comments.copyRaw', async () => {
 		const handler = getCurrentHandler();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
@@ -165,7 +165,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Copy as markdown
-	const copyMarkdownCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.copyMarkdown', async () => {
+	const copyMarkdownCommand = vscode.commands.registerCommand('shadow-comments.copyMarkdown', async () => {
 		const handler = getCurrentHandler();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
@@ -175,7 +175,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Copy as JSON
-	const copyJsonCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.copyJson', async () => {
+	const copyJsonCommand = vscode.commands.registerCommand('shadow-comments.copyJson', async () => {
 		const handler = getCurrentHandler();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
@@ -185,7 +185,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Go to comment
-	const goToCommentCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.goToComment', async (comment: any, workspaceFolder?: vscode.WorkspaceFolder) => {
+	const goToCommentCommand = vscode.commands.registerCommand('shadow-comments.goToComment', async (comment: any, workspaceFolder?: vscode.WorkspaceFolder) => {
 		if (!comment || !comment.filePath) {
 			return;
 		}
@@ -208,7 +208,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Edit comment at current position
-	const editCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.editCommentAtCursor', async () => {
+	const editCommentAtCursorCommand = vscode.commands.registerCommand('shadow-comments.editCommentAtCursor', async () => {
 		const { comment, handler, workspaceFolder } = await findCommentAtCursor();
 		
 		if (!comment || !handler || !workspaceFolder) {
@@ -232,7 +232,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Command: Delete comment at current position
-	const deleteCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.deleteCommentAtCursor', async () => {
+	const deleteCommentAtCursorCommand = vscode.commands.registerCommand('shadow-comments.deleteCommentAtCursor', async () => {
 		const { comment, handler, workspaceFolder } = await findCommentAtCursor();
 		
 		if (!comment || !handler || !workspaceFolder) {
@@ -256,7 +256,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Register all commands
-	console.log('[Vibe Letter] Registering all commands to context.subscriptions...');
+	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
 		addCommentCommand,
 		copyRawCommand,
@@ -266,7 +266,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		editCommentAtCursorCommand,
 		deleteCommentAtCursorCommand
 	);
-	console.log('[Vibe Letter] Extension activation completed!');
+	console.log('[Shadow Comments] Extension activation completed!');
 	
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(

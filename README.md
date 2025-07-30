@@ -1,6 +1,6 @@
-# VSCode Extension - Vibe Letter
+# Shadow Comments
 
-A VSCode extension for managing line-specific comments in a local memo file. Perfect for code reviews and AI-assisted coding workflows.
+Keep private code comments that live in the shadows - never touching your source files or git history. Perfect for personal notes, code reviews, and AI-assisted coding workflows.
 
 ## Features
 
@@ -31,7 +31,7 @@ A VSCode extension for managing line-specific comments in a local memo file. Per
 
 - Comments are indicated by a blue "C" icon in the editor gutter
 - Hover over the icon to see the comment content
-- Access the Comments Tree View from the Activity Bar (Vibe Letter icon)
+- Access the Comments Tree View from the Activity Bar (Shadow Comments icon)
 - Tree view shows all comments organized by file
 - Click on any comment to navigate to its location in the code
 

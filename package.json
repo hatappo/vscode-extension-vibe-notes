@@ -1,7 +1,7 @@
 {
-  "name": "vscode-extension-vibe-letter",
-  "displayName": "vscode-extension-vibe-letter",
-  "description": "",
+  "name": "shadow-comments",
+  "displayName": "Shadow Comments",
+  "description": "Keep private code comments that never touch your source files",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.102.0"
@@ -16,44 +16,44 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-extension-vibe-letter.addComment",
+        "command": "shadow-comments.addComment",
         "title": "Add Comment to Line"
       },
       {
-        "command": "vscode-extension-vibe-letter.copyRaw",
+        "command": "shadow-comments.copyRaw",
         "title": "Copy Comments as Raw"
       },
       {
-        "command": "vscode-extension-vibe-letter.copyMarkdown",
+        "command": "shadow-comments.copyMarkdown",
         "title": "Copy Comments as Markdown"
       },
       {
-        "command": "vscode-extension-vibe-letter.copyJson",
+        "command": "shadow-comments.copyJson",
         "title": "Copy Comments as JSON"
       },
       {
-        "command": "vscode-extension-vibe-letter.editCommentAtCursor",
+        "command": "shadow-comments.editCommentAtCursor",
         "title": "Edit Comment"
       },
       {
-        "command": "vscode-extension-vibe-letter.deleteCommentAtCursor",
+        "command": "shadow-comments.deleteCommentAtCursor",
         "title": "Delete Comment"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "vscode-extension-vibe-letter.addComment",
+          "command": "shadow-comments.addComment",
           "group": "comments",
           "when": "editorTextFocus"
         },
         {
-          "command": "vscode-extension-vibe-letter.editCommentAtCursor",
+          "command": "shadow-comments.editCommentAtCursor",
           "group": "comments",
           "when": "editorTextFocus"
         },
         {
-          "command": "vscode-extension-vibe-letter.deleteCommentAtCursor",
+          "command": "shadow-comments.deleteCommentAtCursor",
           "group": "comments",
           "when": "editorTextFocus"
         }
@@ -62,19 +62,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "vibe-letter",
-          "title": "Vibe Letter",
+          "id": "shadow-comments",
+          "title": "Shadow Comments",
           "icon": "$(comment-discussion)"
         }
       ]
     },
     "views": {
-      "vibe-letter": [
+      "shadow-comments": [
         {
-          "id": "vibeLetterComments",
+          "id": "shadowCommentsView",
           "name": "Comments",
           "icon": "$(comment)",
-          "contextualTitle": "Vibe Letter Comments"
+          "contextualTitle": "Shadow Comments"
         }
       ]
     }
