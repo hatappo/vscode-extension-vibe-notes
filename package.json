@@ -4,6 +4,10 @@
   "description": "Keep private code comments that never touch your source files",
   "publisher": "hatappo",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hatappo/vscode-extension-shadow-comments"
+  },
   "engines": {
     "vscode": "^1.102.0"
   },
