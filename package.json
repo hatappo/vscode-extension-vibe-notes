@@ -2,12 +2,24 @@
   "name": "shadow-comments",
   "displayName": "Shadow Comments",
   "description": "Keep private code comments that never touch your source files",
+  "publisher": "hatappo",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "comments",
+    "notes",
+    "git notes",
+    "code review",
+    "annotations",
+    "agentic coding",
+    "vibe coding",
+    "ai coding",
+    "private comments"
   ],
   "activationEvents": [
     "onStartupFinished"
