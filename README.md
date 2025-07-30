@@ -37,10 +37,17 @@ Keep private code comments that live in the shadows - never touching your source
 
 ### Exporting Comments
 
-Use the Command Palette (Cmd/Ctrl+Shift+P) to access:
-- `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
-- `Copy Comments as Markdown`: Copy formatted markdown with clickable links
-- `Copy Comments as JSON`: Copy comments as JSON structure
+You can export comments in three ways:
+
+1. **Quick Copy Buttons**: Use the icon buttons in the Comments tree view title bar:
+   - 📄 Copy as Raw
+   - 📝 Copy as Markdown  
+   - {} Copy as JSON
+
+2. **Command Palette**: Press Cmd/Ctrl+Shift+P and use:
+   - `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
+   - `Copy Comments as Markdown`: Copy formatted markdown with clickable links
+   - `Copy Comments as JSON`: Copy comments as JSON structure
 
 ### Storage Format
 

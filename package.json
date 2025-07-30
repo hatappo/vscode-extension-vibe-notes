@@ -21,15 +21,18 @@
       },
       {
         "command": "shadow-comments.copyRaw",
-        "title": "Copy Comments as Raw"
+        "title": "Copy Comments as Raw",
+        "icon": "$(files)"
       },
       {
         "command": "shadow-comments.copyMarkdown",
-        "title": "Copy Comments as Markdown"
+        "title": "Copy Comments as Markdown",
+        "icon": "$(markdown)"
       },
       {
         "command": "shadow-comments.copyJson",
-        "title": "Copy Comments as JSON"
+        "title": "Copy Comments as JSON",
+        "icon": "$(json)"
       },
       {
         "command": "shadow-comments.editCommentAtCursor",
@@ -56,6 +59,23 @@
           "command": "shadow-comments.deleteCommentAtCursor",
           "group": "comments",
           "when": "editorTextFocus"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "shadow-comments.copyRaw",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "shadow-comments.copyMarkdown",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "shadow-comments.copyJson",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@3"
         }
       ]
     },
