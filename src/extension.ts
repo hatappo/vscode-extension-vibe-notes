@@ -370,6 +370,28 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Comments refreshed');
 	});
 
+	// Command: Open comments file
+	const openCommentsFileCommand = vscode.commands.registerCommand('shadow-comments.openCommentsFile', async () => {
+		// Get the first workspace folder
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return;
+		}
+
+		// Construct the path to .local.comments.txt
+		const commentsFilePath = path.join(workspaceFolder.uri.fsPath, '.local.comments.txt');
+		const fileUri = vscode.Uri.file(commentsFilePath);
+
+		try {
+			// Open the file in the editor
+			const document = await vscode.workspace.openTextDocument(fileUri);
+			await vscode.window.showTextDocument(document);
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to open comments file: ${error}`);
+		}
+	});
+
 	// Register all commands
 	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
@@ -382,7 +404,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		deleteCommentAtCursorCommand,
 		editCommentAtLineCommand,
 		deleteCommentAtLineCommand,
-		refreshTreeCommand
+		refreshTreeCommand,
+		openCommentsFileCommand
 	);
 	console.log('[Shadow Comments] Extension activation completed!');
 	

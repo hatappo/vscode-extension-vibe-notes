@@ -54,6 +54,11 @@
         "command": "shadow-comments.refreshTree",
         "title": "Refresh Comments",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "shadow-comments.openCommentsFile",
+        "title": "Open Comments File",
+        "icon": "$(file-text)"
       }
     ],
     "menus": {
@@ -81,19 +86,24 @@
           "group": "navigation@0"
         },
         {
-          "command": "shadow-comments.copyRaw",
+          "command": "shadow-comments.openCommentsFile",
           "when": "view == shadowCommentsView",
           "group": "navigation@1"
         },
         {
-          "command": "shadow-comments.copyMarkdown",
+          "command": "shadow-comments.copyRaw",
           "when": "view == shadowCommentsView",
           "group": "navigation@2"
         },
         {
-          "command": "shadow-comments.copyJson",
+          "command": "shadow-comments.copyMarkdown",
           "when": "view == shadowCommentsView",
           "group": "navigation@3"
+        },
+        {
+          "command": "shadow-comments.copyJson",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@4"
         }
       ]
     },

@@ -50,6 +50,7 @@ You can export comments in three ways:
 
 1. **Quick Actions**: Use the icon buttons in the Comments tree view title bar:
    - 🔄 Refresh - Reload comments from file
+   - 📄 Open File - Open .local.comments.txt in editor
    - 📄 Copy as Raw
    - 📝 Copy as Markdown  
    - {} Copy as JSON
