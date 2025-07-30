@@ -34,12 +34,30 @@
       {
         "command": "vscode-extension-vibe-letter.copyJson",
         "title": "Copy Comments as JSON"
+      },
+      {
+        "command": "vscode-extension-vibe-letter.editCommentAtCursor",
+        "title": "Edit Comment"
+      },
+      {
+        "command": "vscode-extension-vibe-letter.deleteCommentAtCursor",
+        "title": "Delete Comment"
       }
     ],
     "menus": {
       "editor/context": [
         {
           "command": "vscode-extension-vibe-letter.addComment",
+          "group": "comments",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "vscode-extension-vibe-letter.editCommentAtCursor",
+          "group": "comments",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "vscode-extension-vibe-letter.deleteCommentAtCursor",
           "group": "comments",
           "when": "editorTextFocus"
         }

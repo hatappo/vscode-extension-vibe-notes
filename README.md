@@ -20,6 +20,13 @@ A VSCode extension for managing line-specific comments in a local memo file. Per
 2. Right-click and select "Add Comment to Line"
 3. Enter your comment in the dialog box
 
+### Editing/Deleting Comments
+
+1. Place your cursor on a line that has a comment (indicated by blue "C" icon)
+2. Right-click to open the context menu
+3. Select "Edit Comment" to modify the comment text
+4. Select "Delete Comment" to remove the comment (with confirmation)
+
 ### Viewing Comments
 
 - Comments are indicated by a blue "C" icon in the editor gutter
@@ -87,7 +94,6 @@ Currently, this extension does not contribute any settings. Future versions may 
 
 ## Known Issues
 
-- Click-to-edit functionality on comment indicators is not yet implemented
 - No markdown preview panel (planned feature)
 
 ## Release Notes
@@ -96,6 +102,7 @@ Currently, this extension does not contribute any settings. Future versions may 
 
 Initial release with core functionality:
 - Add comments via context menu
+- Edit/Delete comments via context menu
 - Display comment indicators in editor
 - Comments tree view in side panel
 - Copy comments in multiple formats (Raw/Markdown/JSON)

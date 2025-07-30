@@ -177,6 +177,116 @@ export async function activate(context: vscode.ExtensionContext) {
 		editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
 	});
 
+	// Command: Edit comment at current position
+	const editCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.editCommentAtCursor', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return;
+		}
+
+		const handler = getCurrentHandler();
+		if (!handler) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return;
+		}
+
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+		if (!workspaceFolder) {
+			return;
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
+		const currentLine = editor.selection.active.line + 1;
+		
+		// Find comment at current line
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			currentLine >= c.startLine && 
+			currentLine <= c.endLine
+		);
+
+		if (!comment) {
+			vscode.window.showInformationMessage('No comment found at current line');
+			return;
+		}
+
+		// Prompt for new comment text
+		const newComment = await vscode.window.showInputBox({
+			prompt: 'Edit comment',
+			value: comment.comment,
+			placeHolder: 'Enter your comment...'
+		});
+
+		if (newComment !== undefined && newComment !== comment.comment) {
+			await handler.updateComment(comment, newComment);
+			
+			// Update decorations and tree view
+			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+			if (decorationProvider) {
+				await decorationProvider.updateDecorations();
+			}
+			
+			await treeProvider.loadAllComments();
+			treeProvider.refresh();
+		}
+	});
+
+	// Command: Delete comment at current position
+	const deleteCommentAtCursorCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.deleteCommentAtCursor', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return;
+		}
+
+		const handler = getCurrentHandler();
+		if (!handler) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return;
+		}
+
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+		if (!workspaceFolder) {
+			return;
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
+		const currentLine = editor.selection.active.line + 1;
+		
+		// Find comment at current line
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			currentLine >= c.startLine && 
+			currentLine <= c.endLine
+		);
+
+		if (!comment) {
+			vscode.window.showInformationMessage('No comment found at current line');
+			return;
+		}
+
+		// Confirm deletion
+		const confirmation = await vscode.window.showWarningMessage(
+			'Delete this comment?',
+			'Delete',
+			'Cancel'
+		);
+
+		if (confirmation === 'Delete') {
+			await handler.deleteComment(comment);
+			
+			// Update decorations and tree view
+			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+			if (decorationProvider) {
+				await decorationProvider.updateDecorations();
+			}
+			
+			await treeProvider.loadAllComments();
+			treeProvider.refresh();
+		}
+	});
+
 	// Register all commands
 	console.log('[Vibe Letter] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
@@ -184,7 +294,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		copyRawCommand,
 		copyMarkdownCommand,
 		copyJsonCommand,
-		goToCommentCommand
+		goToCommentCommand,
+		editCommentAtCursorCommand,
+		deleteCommentAtCursorCommand
 	);
 	console.log('[Vibe Letter] Extension activation completed!');
 	
