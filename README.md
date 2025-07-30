@@ -8,7 +8,7 @@ Keep private code comments that live in the shadows - never touching your source
 - **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
 - **Comments Tree View**: Browse all comments in a dedicated side panel organized by file
 - **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
-- **Auto-sync**: Comments are automatically saved to `.local.memo.txt`
+- **Auto-sync**: Comments are automatically saved to `.local.comments.txt`
 - **Hover Support**: Hover over comment indicators to see the comment content
 - **Click to Navigate**: Click on comments in the tree view to jump to their location
 
@@ -38,13 +38,13 @@ Keep private code comments that live in the shadows - never touching your source
 ### Exporting Comments
 
 Use the Command Palette (Cmd/Ctrl+Shift+P) to access:
-- `Copy Comments as Raw`: Copy the raw `.local.memo.txt` content
+- `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
 - `Copy Comments as Markdown`: Copy formatted markdown with clickable links
 - `Copy Comments as JSON`: Copy comments as JSON structure
 
 ### Storage Format
 
-Comments are stored in `.local.memo.txt` in your workspace root:
+Comments are stored in `.local.comments.txt` in your workspace root:
 
 ```
 src/extension.ts#L7 "Make this function name simpler and clearer"
@@ -115,7 +115,7 @@ See [docs/dev](./docs/dev) for development documentation.
 
 ## Notes
 
-- The `.local.memo.txt` file is automatically added to `.gitignore`
+- The `.local.comments.txt` file is automatically added to `.gitignore`
 - Comments support multi-line text with `\n` escaping
 - File paths in markdown output are clickable links for easy navigation
 

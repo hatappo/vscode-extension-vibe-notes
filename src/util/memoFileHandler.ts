@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import { parseReviewFileWithErrors, ReviewComment, convertToMarkdown } from './reviewCommentParser';
 
 export class MemoFileHandler {
-  private static readonly DEFAULT_MEMO_FILE = '.local.memo.txt';
+  private static readonly DEFAULT_MEMO_FILE = '.local.comments.txt';
   private memoFilePath: string;
   private fileWatcher: vscode.FileSystemWatcher | undefined;
   
