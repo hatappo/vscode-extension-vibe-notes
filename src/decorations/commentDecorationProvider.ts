@@ -10,7 +10,7 @@ export class CommentDecorationProvider {
   constructor(private memoHandler: MemoFileHandler, private workspaceFolder: vscode.WorkspaceFolder) {
     // Create decoration type with a simple indicator
     this.decorationType = vscode.window.createTextEditorDecorationType({
-      gutterIconPath: vscode.Uri.parse('data:image/svg+xml;utf8,<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M 12 3 A 7 7 0 1 1 12 13" stroke="%234285f4" stroke-width="3" fill="none" stroke-linecap="round"/></svg>'),
+      gutterIconPath: vscode.Uri.parse('data:image/svg+xml;utf8,<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M 10 6 A 3 3 0 1 0 10 10" stroke="%234285f4" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'),
       gutterIconSize: 'contain',
       overviewRulerColor: '#4285f4',
       overviewRulerLane: vscode.OverviewRulerLane.Right
