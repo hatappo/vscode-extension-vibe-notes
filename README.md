@@ -48,7 +48,8 @@ You can edit or delete comments in two ways:
 
 You can export comments in three ways:
 
-1. **Quick Copy Buttons**: Use the icon buttons in the Comments tree view title bar:
+1. **Quick Actions**: Use the icon buttons in the Comments tree view title bar:
+   - 🔄 Refresh - Reload comments from file
    - 📄 Copy as Raw
    - 📝 Copy as Markdown  
    - {} Copy as JSON

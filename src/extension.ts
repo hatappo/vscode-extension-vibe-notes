@@ -54,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const watcher = handler.getFileWatcher();
 			if (watcher) {
 				const handleFileChange = async () => {
+					console.log('[Shadow Comments] File changed, updating UI...');
 					await decorationProvider.updateDecorations();
 					await treeProvider.refresh();
 					codeLensProvider.refresh();
@@ -363,6 +364,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Command: Refresh tree view
+	const refreshTreeCommand = vscode.commands.registerCommand('shadow-comments.refreshTree', async () => {
+		await treeProvider.refresh();
+		vscode.window.showInformationMessage('Comments refreshed');
+	});
+
 	// Register all commands
 	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
@@ -374,7 +381,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		editCommentAtCursorCommand,
 		deleteCommentAtCursorCommand,
 		editCommentAtLineCommand,
-		deleteCommentAtLineCommand
+		deleteCommentAtLineCommand,
+		refreshTreeCommand
 	);
 	console.log('[Shadow Comments] Extension activation completed!');
 	

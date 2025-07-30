@@ -49,6 +49,11 @@
       {
         "command": "shadow-comments.deleteCommentAtLine",
         "title": "Delete Comment at Line"
+      },
+      {
+        "command": "shadow-comments.refreshTree",
+        "title": "Refresh Comments",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -70,6 +75,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "shadow-comments.refreshTree",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@0"
+        },
         {
           "command": "shadow-comments.copyRaw",
           "when": "view == shadowCommentsView",
