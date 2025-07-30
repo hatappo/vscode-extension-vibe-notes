@@ -426,6 +426,17 @@ export async function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
+			// Show confirmation dialog
+			const confirmation = await vscode.window.showWarningMessage(
+				'Sync comments to Git Notes? This will overwrite any existing notes on the current HEAD commit.',
+				'Sync',
+				'Cancel'
+			);
+
+			if (confirmation !== 'Sync') {
+				return;
+			}
+
 			// Get the raw content
 			const content = await handler.getRawContent();
 
