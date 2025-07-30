@@ -4,16 +4,20 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { MemoFileHandler } from './util/memoFileHandler';
 import { CommentDecorationProvider } from './decorations/commentDecorationProvider';
+import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	console.log('[Vibe Letter] Extension activation started!');
 	console.log('[Vibe Letter] Context:', context.extensionPath);
 
 	// Initialize memo file handlers and decoration providers for each workspace
 	const memoHandlers = new Map<string, MemoFileHandler>();
 	const decorationProviders = new Map<string, CommentDecorationProvider>();
+	
+	// Create a single tree provider for all workspaces
+	const treeProvider = new MultiWorkspaceTreeProvider();
 
 	// Initialize handlers for existing workspace folders
 	if (vscode.workspace.workspaceFolders) {
@@ -29,14 +33,37 @@ export function activate(context: vscode.ExtensionContext) {
 			// Initial decoration update
 			decorationProvider.updateDecorations();
 			
+			// Add workspace to tree provider
+			treeProvider.addWorkspace(folder, handler);
+			
 			// Set up file watcher
 			const watcher = handler.getFileWatcher();
 			if (watcher) {
-				watcher.onDidChange(() => decorationProvider.updateDecorations());
-				watcher.onDidCreate(() => decorationProvider.updateDecorations());
-				watcher.onDidDelete(() => decorationProvider.updateDecorations());
+				watcher.onDidChange(async () => {
+					await decorationProvider.updateDecorations();
+					await treeProvider.loadAllComments();
+					treeProvider.refresh();
+				});
+				watcher.onDidCreate(async () => {
+					await decorationProvider.updateDecorations();
+					await treeProvider.loadAllComments();
+					treeProvider.refresh();
+				});
+				watcher.onDidDelete(async () => {
+					await decorationProvider.updateDecorations();
+					await treeProvider.loadAllComments();
+					treeProvider.refresh();
+				});
 			}
 		}
+		
+		// Register tree view after all workspaces are initialized
+		await treeProvider.loadAllComments();
+		const treeView = vscode.window.createTreeView('vibeLetterComments', {
+			treeDataProvider: treeProvider,
+			showCollapseAll: true
+		});
+		context.subscriptions.push(treeView);
 	}
 
 	// Get handler for current workspace
@@ -85,11 +112,15 @@ export function activate(context: vscode.ExtensionContext) {
 			const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
 			await handler.addComment(relativePath, startLine, endLine, comment);
 			
-			// Update decorations
+			// Update decorations and tree view
 			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
 			if (decorationProvider) {
 				await decorationProvider.updateDecorations();
 			}
+			
+			// Update tree view
+			await treeProvider.loadAllComments();
+			treeProvider.refresh();
 		}
 	});
 
@@ -123,13 +154,37 @@ export function activate(context: vscode.ExtensionContext) {
 		await handler.copyAsJson();
 	});
 
+	// Command: Go to comment
+	const goToCommentCommand = vscode.commands.registerCommand('vscode-extension-vibe-letter.goToComment', async (comment: any, workspaceFolder?: vscode.WorkspaceFolder) => {
+		if (!comment || !comment.filePath) {
+			return;
+		}
+
+		// Use provided workspace folder or default to first one
+		const folder = workspaceFolder || vscode.workspace.workspaceFolders?.[0];
+		if (!folder) {
+			return;
+		}
+
+		const fullPath = path.join(folder.uri.fsPath, comment.filePath);
+		const document = await vscode.workspace.openTextDocument(fullPath);
+		const editor = await vscode.window.showTextDocument(document);
+
+		// Navigate to the comment position
+		const position = new vscode.Position(comment.startLine - 1, comment.startColumn || 0);
+		const range = new vscode.Range(position, position);
+		editor.selection = new vscode.Selection(position, position);
+		editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+	});
+
 	// Register all commands
 	console.log('[Vibe Letter] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
 		addCommentCommand,
 		copyRawCommand,
 		copyMarkdownCommand,
-		copyJsonCommand
+		copyJsonCommand,
+		goToCommentCommand
 	);
 	console.log('[Vibe Letter] Extension activation completed!');
 	

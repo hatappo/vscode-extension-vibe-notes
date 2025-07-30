@@ -6,9 +6,11 @@ A VSCode extension for managing line-specific comments in a local memo file. Per
 
 - **Add Comments to Lines**: Right-click on any line or selection to add a comment
 - **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
+- **Comments Tree View**: Browse all comments in a dedicated side panel organized by file
 - **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
 - **Auto-sync**: Comments are automatically saved to `.local.memo.txt`
 - **Hover Support**: Hover over comment indicators to see the comment content
+- **Click to Navigate**: Click on comments in the tree view to jump to their location
 
 ## Usage
 
@@ -22,6 +24,9 @@ A VSCode extension for managing line-specific comments in a local memo file. Per
 
 - Comments are indicated by a blue "C" icon in the editor gutter
 - Hover over the icon to see the comment content
+- Access the Comments Tree View from the Activity Bar (Vibe Letter icon)
+- Tree view shows all comments organized by file
+- Click on any comment to navigate to its location in the code
 
 ### Exporting Comments
 
@@ -83,7 +88,7 @@ Currently, this extension does not contribute any settings. Future versions may 
 ## Known Issues
 
 - Click-to-edit functionality on comment indicators is not yet implemented
-- No markdown preview panel or comment list view (planned features)
+- No markdown preview panel (planned feature)
 
 ## Release Notes
 
@@ -92,8 +97,10 @@ Currently, this extension does not contribute any settings. Future versions may 
 Initial release with core functionality:
 - Add comments via context menu
 - Display comment indicators in editor
-- Copy comments in multiple formats
+- Comments tree view in side panel
+- Copy comments in multiple formats (Raw/Markdown/JSON)
 - File watching for automatic updates
+- Support for #L notation with optional column positions
 
 ## Development
 

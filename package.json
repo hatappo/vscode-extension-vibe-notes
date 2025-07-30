@@ -44,6 +44,25 @@
           "when": "editorTextFocus"
         }
       ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vibe-letter",
+          "title": "Vibe Letter",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "vibe-letter": [
+        {
+          "id": "vibeLetterComments",
+          "name": "Comments",
+          "icon": "$(comment)",
+          "contextualTitle": "Vibe Letter Comments"
+        }
+      ]
     }
   },
   "scripts": {
