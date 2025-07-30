@@ -6,6 +6,7 @@ Keep private code comments that live in the shadows - never touching your source
 
 - **Add Comments to Lines**: Right-click on any line or selection to add a comment
 - **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
+- **Inline Actions**: Edit or delete comments directly with CodeLens buttons above commented lines
 - **Comments Tree View**: Browse all comments in a dedicated side panel organized by file
 - **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
 - **Auto-sync**: Comments are automatically saved to `.local.comments.txt`
@@ -22,6 +23,14 @@ Keep private code comments that live in the shadows - never touching your source
 
 ### Editing/Deleting Comments
 
+You can edit or delete comments in two ways:
+
+**Method 1: CodeLens (Inline Actions)**
+- Look for the Edit and Delete buttons that appear above lines with comments
+- Click "Edit" to modify the comment text
+- Click "Delete" to remove the comment (with confirmation)
+
+**Method 2: Right-click Menu**
 1. Place your cursor on a line that has a comment (indicated by blue "C" icon)
 2. Right-click to open the context menu
 3. Select "Edit Comment" to modify the comment text

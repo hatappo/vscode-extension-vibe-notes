@@ -41,6 +41,14 @@
       {
         "command": "shadow-comments.deleteCommentAtCursor",
         "title": "Delete Comment"
+      },
+      {
+        "command": "shadow-comments.editCommentAtLine",
+        "title": "Edit Comment at Line"
+      },
+      {
+        "command": "shadow-comments.deleteCommentAtLine",
+        "title": "Delete Comment at Line"
       }
     ],
     "menus": {

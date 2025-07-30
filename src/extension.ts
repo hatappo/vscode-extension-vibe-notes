@@ -6,6 +6,7 @@ import { MemoFileHandler } from './util/memoFileHandler';
 import { CommentDecorationProvider } from './decorations/commentDecorationProvider';
 import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
 import { ReviewComment } from './util/reviewCommentParser';
+import { CommentCodeLensProvider } from './providers/commentCodeLensProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -16,6 +17,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize memo file handlers and decoration providers for each workspace
 	const memoHandlers = new Map<string, MemoFileHandler>();
 	const decorationProviders = new Map<string, CommentDecorationProvider>();
+	const codeLensProviders = new Map<string, CommentCodeLensProvider>();
 	
 	// Create a single tree provider for all workspaces
 	const treeProvider = new MultiWorkspaceTreeProvider();
@@ -31,6 +33,17 @@ export async function activate(context: vscode.ExtensionContext) {
 			const decorationProvider = new CommentDecorationProvider(handler, folder);
 			decorationProviders.set(folder.uri.fsPath, decorationProvider);
 			
+			// Create CodeLens provider
+			const codeLensProvider = new CommentCodeLensProvider(handler, folder);
+			codeLensProviders.set(folder.uri.fsPath, codeLensProvider);
+			
+			// Register CodeLens provider
+			const codeLensDisposable = vscode.languages.registerCodeLensProvider(
+				{ scheme: 'file', pattern: new vscode.RelativePattern(folder, '**/*') },
+				codeLensProvider
+			);
+			context.subscriptions.push(codeLensDisposable);
+			
 			// Initial decoration update
 			decorationProvider.updateDecorations();
 			
@@ -44,6 +57,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					await decorationProvider.updateDecorations();
 					await treeProvider.loadAllComments();
 					treeProvider.refresh();
+					codeLensProvider.refresh();
 				};
 
 				watcher.onDidChange(handleFileChange);
@@ -98,6 +112,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
 		if (decorationProvider) {
 			await decorationProvider.updateDecorations();
+		}
+		
+		const codeLensProvider = codeLensProviders.get(workspaceFolder.uri.fsPath);
+		if (codeLensProvider) {
+			codeLensProvider.refresh();
 		}
 		
 		await treeProvider.loadAllComments();
@@ -272,6 +291,80 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Command: Edit comment at specific line (for CodeLens)
+	const editCommentAtLineCommand = vscode.commands.registerCommand('shadow-comments.editCommentAtLine', async (uri: vscode.Uri, line: number) => {
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+		if (!workspaceFolder) {
+			return;
+		}
+
+		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		if (!handler) {
+			return;
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			line >= c.startLine && 
+			line <= c.endLine
+		);
+
+		if (!comment) {
+			return;
+		}
+
+		// Prompt for new comment text
+		const newComment = await vscode.window.showInputBox({
+			prompt: 'Edit comment',
+			value: comment.comment,
+			placeHolder: 'Enter your comment...'
+		});
+
+		if (newComment !== undefined && newComment !== comment.comment) {
+			await handler.updateComment(comment, newComment);
+			await updateUIComponents(workspaceFolder);
+		}
+	});
+
+	// Command: Delete comment at specific line (for CodeLens)
+	const deleteCommentAtLineCommand = vscode.commands.registerCommand('shadow-comments.deleteCommentAtLine', async (uri: vscode.Uri, line: number) => {
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+		if (!workspaceFolder) {
+			return;
+		}
+
+		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		if (!handler) {
+			return;
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			line >= c.startLine && 
+			line <= c.endLine
+		);
+
+		if (!comment) {
+			return;
+		}
+
+		// Confirm deletion
+		const confirmation = await vscode.window.showWarningMessage(
+			'Delete this comment?',
+			'Delete',
+			'Cancel'
+		);
+
+		if (confirmation === 'Delete') {
+			await handler.deleteComment(comment);
+			await updateUIComponents(workspaceFolder);
+		}
+	});
+
 	// Register all commands
 	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
@@ -281,7 +374,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		copyJsonCommand,
 		goToCommentCommand,
 		editCommentAtCursorCommand,
-		deleteCommentAtCursorCommand
+		deleteCommentAtCursorCommand,
+		editCommentAtLineCommand,
+		deleteCommentAtLineCommand
 	);
 	console.log('[Shadow Comments] Extension activation completed!');
 	
