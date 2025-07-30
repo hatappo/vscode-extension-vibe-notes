@@ -1,0 +1,4 @@
+src/extension.ts#L10 "This is a test comment"
+src/extension.ts#L20 "Another test comment for hover testing"
+package.json#L15-16 "ここはもっとシンプルに。あるいはコメントを追加して分かりやすく"
+package.json#L20 "削除可能"
