@@ -55,8 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (watcher) {
 				const handleFileChange = async () => {
 					await decorationProvider.updateDecorations();
-					await treeProvider.loadAllComments();
-					treeProvider.refresh();
+					await treeProvider.refresh();
 					codeLensProvider.refresh();
 				};
 
@@ -67,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		
 		// Register tree view after all workspaces are initialized
-		await treeProvider.loadAllComments();
+		await treeProvider.refresh();
 		const treeView = vscode.window.createTreeView('shadowCommentsView', {
 			treeDataProvider: treeProvider,
 			showCollapseAll: true
@@ -119,8 +118,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			codeLensProvider.refresh();
 		}
 		
-		await treeProvider.loadAllComments();
-		treeProvider.refresh();
+		await treeProvider.refresh();
 	};
 
 	// Find comment at current cursor position

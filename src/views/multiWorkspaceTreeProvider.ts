@@ -25,8 +25,8 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
     });
   }
 
-  refresh(): void {
-    this.loadAllComments();
+  async refresh(): Promise<void> {
+    await this.loadAllComments();
     this._onDidChangeTreeData.fire();
   }
 
