@@ -1,71 +1,96 @@
-# vscode-extension-vibe-letter README
+# VSCode Extension - Vibe Letter
 
-This is the README for your extension "vscode-extension-vibe-letter". After writing up a brief description, we recommend including the following sections.
+A VSCode extension for managing line-specific comments in a local memo file. Perfect for code reviews and AI-assisted coding workflows.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Add Comments to Lines**: Right-click on any line or selection to add a comment
+- **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
+- **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
+- **Auto-sync**: Comments are automatically saved to `.local.memo.txt`
+- **Hover Support**: Hover over comment indicators to see the comment content
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+### Adding Comments
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+1. Select a line or range of lines in your code
+2. Right-click and select "Add Comment to Line"
+3. Enter your comment in the dialog box
+
+### Viewing Comments
+
+- Comments are indicated by a blue "C" icon in the editor gutter
+- Hover over the icon to see the comment content
+
+### Exporting Comments
+
+Use the Command Palette (Cmd/Ctrl+Shift+P) to access:
+- `Copy Comments as Raw`: Copy the raw `.local.memo.txt` content
+- `Copy Comments as Markdown`: Copy formatted markdown with clickable links
+- `Copy Comments as JSON`: Copy comments as JSON structure
+
+### Storage Format
+
+Comments are stored in `.local.memo.txt` in your workspace root:
+
+```
+src/extension.ts:7 "Make this function name simpler and clearer"
+src/extension.ts:13-15 "These comments are unnecessary.\nPlease remove them."
+src/test/extension.test.ts:11 "Please add an explanation."
+```
+
+### Markdown Output Example
+
+When copying as markdown, you get formatted output with clickable links:
+
+```markdown
+## [src/extension.ts](src/extension.ts)
+
+### [line: 7](src/extension.ts:7)
+
+Make this function name simpler and clearer
+
+### [line: 13-15](src/extension.ts:13)
+
+These comments are unnecessary.
+Please remove them.
+```
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code 1.102.0 or higher
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Currently, this extension does not contribute any settings. Future versions may include:
+- Custom memo file location
+- Comment indicator styles
+- Enable/disable features
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Click-to-edit functionality on comment indicators is not yet implemented
+- No markdown preview panel or comment list view (planned features)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
+Initial release with core functionality:
+- Add comments via context menu
+- Display comment indicators in editor
+- Copy comments in multiple formats
+- File watching for automatic updates
 
-Initial release of ...
+## Development
 
-### 1.0.1
+See [docs/dev](./docs/dev) for development documentation.
 
-Fixed issue #.
+## Notes
 
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- The `.local.memo.txt` file is automatically added to `.gitignore`
+- Comments support multi-line text with `\n` escaping
+- File paths in markdown output are clickable links for easy navigation
 
 **Enjoy!**

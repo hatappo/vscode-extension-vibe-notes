@@ -3,22 +3,48 @@
   "displayName": "vscode-extension-vibe-letter",
   "description": "",
   "version": "0.0.1",
-  "type": "module",
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:vscode-extension-vibe-letter.addComment",
+    "onCommand:vscode-extension-vibe-letter.copyRaw",
+    "onCommand:vscode-extension-vibe-letter.copyMarkdown",
+    "onCommand:vscode-extension-vibe-letter.copyJson",
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-extension-vibe-letter.helloWorld",
-        "title": "Hello World"
+        "command": "vscode-extension-vibe-letter.addComment",
+        "title": "Add Comment to Line"
+      },
+      {
+        "command": "vscode-extension-vibe-letter.copyRaw",
+        "title": "Copy Comments as Raw"
+      },
+      {
+        "command": "vscode-extension-vibe-letter.copyMarkdown",
+        "title": "Copy Comments as Markdown"
+      },
+      {
+        "command": "vscode-extension-vibe-letter.copyJson",
+        "title": "Copy Comments as JSON"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vscode-extension-vibe-letter.addComment",
+          "group": "comments",
+          "when": "editorTextFocus"
+        }
+      ]
+    }
   },
   "scripts": {
     "node": "node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning --loader ts-node/esm",
