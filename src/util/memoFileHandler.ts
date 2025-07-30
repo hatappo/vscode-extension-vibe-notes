@@ -16,23 +16,9 @@ export class MemoFileHandler {
    * Initialize the memo file handler and set up file watching
    */
   async initialize(): Promise<void> {
-    // Ensure memo file exists
-    await this.ensureMemoFileExists();
-    
-    // Set up file watcher
+    // Set up file watcher (even if file doesn't exist yet)
     const pattern = new vscode.RelativePattern(this.workspaceFolder, MemoFileHandler.DEFAULT_MEMO_FILE);
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
-  }
-  
-  /**
-   * Ensure the memo file exists, create if not
-   */
-  private async ensureMemoFileExists(): Promise<void> {
-    try {
-      await fs.access(this.memoFilePath);
-    } catch {
-      await fs.writeFile(this.memoFilePath, '', 'utf8');
-    }
   }
   
   /**
@@ -65,6 +51,14 @@ export class MemoFileHandler {
    */
   async readComments(): Promise<ReviewComment[]> {
     try {
+      // Check if file exists first
+      try {
+        await fs.access(this.memoFilePath);
+      } catch {
+        // File doesn't exist yet, return empty array
+        return [];
+      }
+      
       const content = await fs.readFile(this.memoFilePath, 'utf8');
       const result = parseReviewFileWithErrors(content);
       
@@ -87,8 +81,13 @@ export class MemoFileHandler {
    */
   async addComment(filePath: string, startLine: number, endLine: number, comment: string, startColumn?: number, endColumn?: number): Promise<void> {
     try {
-      // Read existing content
-      const content = await fs.readFile(this.memoFilePath, 'utf8');
+      // Read existing content, or use empty string if file doesn't exist
+      let content = '';
+      try {
+        content = await fs.readFile(this.memoFilePath, 'utf8');
+      } catch {
+        // File doesn't exist yet, will be created
+      }
       
       // Format the new comment with new format
       const lineSpec = this.formatLineSpec(startLine, endLine, startColumn, endColumn);
@@ -168,8 +167,13 @@ export class MemoFileHandler {
    * Get raw content
    */
   async getRawContent(): Promise<string> {
-    const content = await fs.readFile(this.memoFilePath, 'utf8');
-    return content;
+    try {
+      const content = await fs.readFile(this.memoFilePath, 'utf8');
+      return content;
+    } catch {
+      // File doesn't exist yet
+      return '';
+    }
   }
   
   /**
