@@ -1,24 +1,158 @@
 {
-  "name": "vscode-extension-vibe-letter",
-  "displayName": "vscode-extension-vibe-letter",
-  "description": "",
+  "name": "shadow-comments",
+  "displayName": "Shadow Comments",
+  "description": "Keep private code comments that never touch your source files",
+  "publisher": "hatappo",
   "version": "0.0.1",
-  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hatappo/vscode-extension-shadow-comments"
+  },
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "keywords": [
+    "comments",
+    "notes",
+    "git notes",
+    "code review",
+    "annotations",
+    "agentic coding",
+    "vibe coding",
+    "ai coding",
+    "private comments"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-extension-vibe-letter.helloWorld",
-        "title": "Hello World"
+        "command": "shadow-comments.addComment",
+        "title": "Add Comment to Line"
+      },
+      {
+        "command": "shadow-comments.copyRaw",
+        "title": "Copy Comments as Raw",
+        "icon": "$(files)"
+      },
+      {
+        "command": "shadow-comments.copyMarkdown",
+        "title": "Copy Comments as Markdown",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "shadow-comments.copyJson",
+        "title": "Copy Comments as JSON",
+        "icon": "$(json)"
+      },
+      {
+        "command": "shadow-comments.editCommentAtCursor",
+        "title": "Edit Comment"
+      },
+      {
+        "command": "shadow-comments.deleteCommentAtCursor",
+        "title": "Delete Comment"
+      },
+      {
+        "command": "shadow-comments.editCommentAtLine",
+        "title": "Edit Comment at Line"
+      },
+      {
+        "command": "shadow-comments.deleteCommentAtLine",
+        "title": "Delete Comment at Line"
+      },
+      {
+        "command": "shadow-comments.refreshTree",
+        "title": "Refresh Comments",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "shadow-comments.openCommentsFile",
+        "title": "Open Comments File",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "shadow-comments.syncToGitNotes",
+        "title": "Sync to Git Notes",
+        "icon": "$(cloud-upload)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "shadow-comments.addComment",
+          "group": "comments",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "shadow-comments.editCommentAtCursor",
+          "group": "comments",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "shadow-comments.deleteCommentAtCursor",
+          "group": "comments",
+          "when": "editorTextFocus"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "shadow-comments.refreshTree",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@0"
+        },
+        {
+          "command": "shadow-comments.openCommentsFile",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "shadow-comments.syncToGitNotes",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "shadow-comments.copyRaw",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "shadow-comments.copyMarkdown",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "shadow-comments.copyJson",
+          "when": "view == shadowCommentsView",
+          "group": "navigation@5"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "shadow-comments",
+          "title": "Shadow Comments",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "shadow-comments": [
+        {
+          "id": "shadowCommentsView",
+          "name": "Comments",
+          "icon": "$(comment)",
+          "contextualTitle": "Shadow Comments"
+        }
+      ]
+    }
   },
   "scripts": {
     "node": "node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning --loader ts-node/esm",

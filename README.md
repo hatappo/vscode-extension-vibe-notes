@@ -1,71 +1,147 @@
-# vscode-extension-vibe-letter README
+# Shadow Comments
 
-This is the README for your extension "vscode-extension-vibe-letter". After writing up a brief description, we recommend including the following sections.
+Keep private code comments that live in the shadows - never touching your source files or git history. Perfect for personal notes, code reviews, and AI-assisted coding workflows.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Add Comments to Lines**: Right-click on any line or selection to add a comment
+- **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
+- **Inline Actions**: Edit or delete comments directly with CodeLens buttons above commented lines
+- **Comments Tree View**: Browse all comments in a dedicated side panel organized by file
+- **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
+- **Auto-sync**: Comments are automatically saved to `.local.comments.txt`
+- **Hover Support**: Hover over comment indicators to see the comment content
+- **Click to Navigate**: Click on comments in the tree view to jump to their location
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+### Adding Comments
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+1. Select a line or range of lines in your code
+2. Right-click and select "Add Comment to Line"
+3. Enter your comment in the dialog box
+
+### Editing/Deleting Comments
+
+You can edit or delete comments in two ways:
+
+**Method 1: CodeLens (Inline Actions)**
+- Look for the Edit and Delete buttons that appear above lines with comments
+- Click "Edit" to modify the comment text
+- Click "Delete" to remove the comment (with confirmation)
+
+**Method 2: Right-click Menu**
+1. Place your cursor on a line that has a comment (indicated by blue "C" icon)
+2. Right-click to open the context menu
+3. Select "Edit Comment" to modify the comment text
+4. Select "Delete Comment" to remove the comment (with confirmation)
+
+### Viewing Comments
+
+- Comments are indicated by a blue "C" icon in the editor gutter
+- Hover over the icon to see the comment content
+- Access the Comments Tree View from the Activity Bar (Shadow Comments icon)
+- Tree view shows all comments organized by file
+- Click on any comment to navigate to its location in the code
+
+### Exporting Comments
+
+You can export comments in three ways:
+
+1. **Quick Actions**: Use the icon buttons in the Comments tree view title bar:
+   - 🔄 Refresh - Reload comments from file
+   - 📄 Open File - Open .local.comments.txt in editor
+   - ☁️ Sync to Git - Save comments to git notes
+   - 📄 Copy as Raw
+   - 📝 Copy as Markdown  
+   - {} Copy as JSON
+
+2. **Command Palette**: Press Cmd/Ctrl+Shift+P and use:
+   - `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
+   - `Copy Comments as Markdown`: Copy formatted markdown with clickable links
+   - `Copy Comments as JSON`: Copy comments as JSON structure
+
+### Git Notes Integration
+
+You can sync your comments to Git Notes for permanent storage in your repository:
+
+1. Click the ☁️ "Sync to Git" button in the Comments tree view
+2. Comments are saved to the current HEAD commit's git notes
+3. Share with team using `git push --push-notes`
+4. View notes with `git notes show`
+
+### Storage Format
+
+Comments are stored in `.local.comments.txt` in your workspace root:
+
+```
+src/extension.ts#L7 "Make this function name simpler and clearer"
+src/extension.ts#L7,10 "Column 10 needs attention"
+src/extension.ts#L13-15 "These comments are unnecessary.\nPlease remove them."
+src/extension.ts#L7,10-8,12 "This range needs refactoring"
+src/test/extension.test.ts#L11 "Please add an explanation."
+```
+
+Format: `filepath#L<line>[,<column>][-<endline>[,<endcolumn>]] "comment"`
+- Column positions are optional
+- Single line: `#L7` or `#L7,10` 
+- Line range: `#L13-15`
+- Range with columns: `#L7,10-8,12`
+
+### Markdown Output Example
+
+When copying as markdown, you get formatted output with clickable links:
+
+```markdown
+## [src/extension.ts](src/extension.ts)
+
+### [line: 7](src/extension.ts#L7)
+
+Make this function name simpler and clearer
+
+### [line: 7:10](src/extension.ts#L7)
+
+Column 10 needs attention
+
+### [line: 13-15](src/extension.ts#L13)
+
+These comments are unnecessary.
+Please remove them.
+```
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code 1.102.0 or higher
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Currently, this extension does not contribute any settings. Future versions may include:
+- Custom memo file location
+- Comment indicator styles
+- Enable/disable features
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- No markdown preview panel (planned feature)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
+Initial release with core functionality:
+- Add comments via context menu
+- Edit/Delete comments via context menu
+- Display comment indicators in editor
+- Comments tree view in side panel
+- Copy comments in multiple formats (Raw/Markdown/JSON)
+- File watching for automatic updates
+- Support for #L notation with optional column positions
+- Git Notes integration for permanent storage
 
-Initial release of ...
+## Notes
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- The `.local.comments.txt` file is automatically added to `.gitignore`
+- Comments support multi-line text with `\n` escaping
+- File paths in markdown output are clickable links for easy navigation
 
 **Enjoy!**
