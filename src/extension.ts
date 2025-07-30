@@ -2,8 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { MemoFileHandler } from './util/memoFileHandler';
 import { CommentDecorationProvider } from './decorations/commentDecorationProvider';
 import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
@@ -440,12 +439,36 @@ export async function activate(context: vscode.ExtensionContext) {
 			// Get the raw content
 			const content = await handler.getRawContent();
 
-			// Execute git notes command
-			const execAsync = promisify(exec);
+			// Execute git notes command using stdin for security
+			await new Promise<void>((resolve, reject) => {
+				const gitProcess = spawn('git', ['notes', 'add', '-f', '-F', '-'], {
+					cwd: workspaceFolder.uri.fsPath
+				});
 
-			// Add notes to current HEAD commit
-			await execAsync(`git notes add -f -m "${content.replace(/"/g, '\\"')}"`, {
-				cwd: workspaceFolder.uri.fsPath
+				let stderr = '';
+				
+				// Collect stderr for error messages
+				gitProcess.stderr.on('data', (data) => {
+					stderr += data.toString();
+				});
+
+				// Handle process exit
+				gitProcess.on('close', (code) => {
+					if (code === 0) {
+						resolve();
+					} else {
+						reject(new Error(`Git notes failed: ${stderr}`));
+					}
+				});
+
+				// Handle process errors
+				gitProcess.on('error', (err) => {
+					reject(err);
+				});
+
+				// Write content to stdin
+				gitProcess.stdin.write(content);
+				gitProcess.stdin.end();
 			});
 
 			vscode.window.showInformationMessage('Comments synced to git notes');
