@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.3] - 2025-07-31
+
+### Changed
+- Lower the supported version of VSCode to 1.101.0.
+
 ## [0.0.2] - 2025-07-31
 
 ### Fixed
