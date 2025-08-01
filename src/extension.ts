@@ -153,13 +153,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Format line range for display
 	const formatLineRange = (comment: ReviewComment): string => {
-		const { startLine, endLine, startColumn, endColumn } = comment;
+		const { startLine, endLine } = comment;
 		if (startLine === endLine) {
-			return startColumn !== undefined ? `Line ${startLine}:${startColumn}` : `Line ${startLine}`;
+			return `Line ${startLine}`;
 		}
-		return startColumn !== undefined && endColumn !== undefined
-			? `Lines ${startLine}:${startColumn}-${endLine}:${endColumn}`
-			: `Lines ${startLine}-${endLine}`;
+		return `Lines ${startLine}-${endLine}`;
 	};
 
 	// Update UI components after comment changes
@@ -446,7 +444,7 @@ ${enhancedMarkdown}`;
 			const editor = await vscode.window.showTextDocument(document);
 
 			// Navigate to the comment position
-			const position = new vscode.Position(comment.startLine - 1, comment.startColumn || 0);
+			const position = new vscode.Position(comment.startLine - 1, 0);
 			const range = new vscode.Range(position, position);
 			editor.selection = new vscode.Selection(position, position);
 			editor.revealRange(range, vscode.TextEditorRevealType.InCenter);

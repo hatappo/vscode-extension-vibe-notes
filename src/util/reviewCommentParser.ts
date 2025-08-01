@@ -3,8 +3,6 @@ interface ReviewComment {
 	filePath: string;
 	startLine: number;
 	endLine: number;
-	startColumn?: number; // Optional column position
-	endColumn?: number; // Optional column position
 	comment: string;
 	raw: string; // Holds the entire original line
 }
@@ -24,17 +22,9 @@ interface ParseError {
 }
 
 /** Regular expression for parsing review comments */
-// Matches: file.ts#L7 or file.ts#L7,10 or file.ts#L7-9 or file.ts#L7,10-8,12
-const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:,\d+)?(?:-\d+(?:,\d+)?)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+// Matches: file.ts#L7 or file.ts#L7-9
+const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
 
-/** Parse position (line and optional column) */
-function parsePosition(pos: string): { line: number; column?: number } {
-	const parts = pos.split(",");
-	return {
-		line: Number(parts[0]),
-		column: parts[1] ? Number(parts[1]) : undefined,
-	};
-}
 
 /** Parse a single line review comment */
 function parseReviewComment(line: string): ReviewComment | null {
@@ -51,34 +41,22 @@ function parseReviewComment(line: string): ReviewComment | null {
 	// Parse positions
 	let startLine: number;
 	let endLine: number;
-	let startColumn: number | undefined;
-	let endColumn: number | undefined;
 
 	if (positionSpec.includes("-")) {
-		// Range: L7-9 or L7,10-8,12
+		// Range: L7-9
 		const [startPos, endPos] = positionSpec.split("-");
-		const start = parsePosition(startPos);
-		const end = parsePosition(endPos);
-
-		startLine = start.line;
-		startColumn = start.column;
-		endLine = end.line;
-		endColumn = end.column;
+		startLine = Number(startPos);
+		endLine = Number(endPos);
 	} else {
-		// Single position: L7 or L7,10
-		const pos = parsePosition(positionSpec);
-		startLine = pos.line;
-		startColumn = pos.column;
-		endLine = pos.line;
-		endColumn = pos.column;
+		// Single position: L7
+		startLine = Number(positionSpec);
+		endLine = startLine;
 	}
 
 	return {
 		filePath,
 		startLine,
 		endLine,
-		startColumn,
-		endColumn,
 		comment,
 		raw: line, // Holds the entire original line
 	};

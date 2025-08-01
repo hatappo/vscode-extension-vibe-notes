@@ -44,15 +44,11 @@ export class MemoFileHandler {
 	/**
 	 * Format line specification
 	 */
-	private formatLineSpec(startLine: number, endLine: number, startColumn?: number, endColumn?: number): string {
+	private formatLineSpec(startLine: number, endLine: number): string {
 		if (startLine === endLine) {
-			return startColumn !== undefined ? `${startLine},${startColumn}` : `${startLine}`;
+			return `${startLine}`;
 		} else {
-			if (startColumn !== undefined && endColumn !== undefined) {
-				return `${startLine},${startColumn}-${endLine},${endColumn}`;
-			} else {
-				return `${startLine}-${endLine}`;
-			}
+			return `${startLine}-${endLine}`;
 		}
 	}
 
@@ -99,8 +95,6 @@ export class MemoFileHandler {
 		startLine: number,
 		endLine: number,
 		comment: string,
-		startColumn?: number,
-		endColumn?: number,
 	): Promise<void> {
 		try {
 			// Ensure comments directory exists
@@ -115,7 +109,7 @@ export class MemoFileHandler {
 			}
 
 			// Format the new comment with new format
-			const lineSpec = this.formatLineSpec(startLine, endLine, startColumn, endColumn);
+			const lineSpec = this.formatLineSpec(startLine, endLine);
 			const escapedComment = this.escapeComment(comment);
 			const newLine = `${filePath}#L${lineSpec} "${escapedComment}"`;
 
@@ -143,8 +137,6 @@ export class MemoFileHandler {
 					const lineSpec = this.formatLineSpec(
 						oldComment.startLine,
 						oldComment.endLine,
-						oldComment.startColumn,
-						oldComment.endColumn,
 					);
 					const escapedComment = this.escapeComment(newCommentText);
 					return `${oldComment.filePath}#L${lineSpec} "${escapedComment}"`;
