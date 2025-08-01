@@ -3,11 +3,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { spawn } from "child_process";
-import { MemoFileHandler } from "./util/memoFileHandler";
-import { CommentDecorationProvider } from "./decorations/commentDecorationProvider";
+import { NoteFileHandler } from "./util/noteFileHandler";
+import { NoteDecorationProvider } from "./decorations/noteDecorationProvider";
 import { MultiWorkspaceTreeProvider } from "./views/multiWorkspaceTreeProvider";
-import { ReviewComment } from "./util/reviewCommentParser";
-import { CommentCodeLensProvider } from "./providers/commentCodeLensProvider";
+import { Note } from "./util/noteParser";
+import { NoteCodeLensProvider } from "./providers/noteCodeLensProvider";
 import { TempFileManager } from "./util/tempFileManager";
 import { promptGitignoreSetup } from "./util/gitignoreHelper";
 
@@ -17,15 +17,15 @@ const tempFileManagers = new Map<string, TempFileManager>();
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	// Initialize memo file handlers and decoration providers for each workspace
-	const memoHandlers = new Map<string, MemoFileHandler>();
-	const decorationProviders = new Map<string, CommentDecorationProvider>();
-	const codeLensProviders = new Map<string, CommentCodeLensProvider>();
+	// Initialize note file handlers and decoration providers for each workspace
+	const noteHandlers = new Map<string, NoteFileHandler>();
+	const decorationProviders = new Map<string, NoteDecorationProvider>();
+	const codeLensProviders = new Map<string, NoteCodeLensProvider>();
 
 	// Create a single tree provider for all workspaces
 	const treeProvider = new MultiWorkspaceTreeProvider();
 	
-	// Update UI components after comment changes
+	// Update UI components after note changes
 	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
 		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
 		if (decorationProvider) {
@@ -46,16 +46,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	for (const folder of vscode.workspace.workspaceFolders) {
-		const handler = new MemoFileHandler(folder);
+		const handler = new NoteFileHandler(folder);
 		handler.initialize();
-		memoHandlers.set(folder.uri.fsPath, handler);
+		noteHandlers.set(folder.uri.fsPath, handler);
 
 		// Create decoration provider
-		const decorationProvider = new CommentDecorationProvider(handler, folder);
+		const decorationProvider = new NoteDecorationProvider(handler, folder);
 		decorationProviders.set(folder.uri.fsPath, decorationProvider);
 
 		// Create CodeLens provider
-		const codeLensProvider = new CommentCodeLensProvider(handler, folder);
+		const codeLensProvider = new NoteCodeLensProvider(handler, folder);
 		codeLensProviders.set(folder.uri.fsPath, codeLensProvider);
 
 		// Create temp file manager
@@ -83,22 +83,22 @@ export async function activate(context: vscode.ExtensionContext) {
 			watcher.onDidDelete(() => updateUIComponents(folder));
 		}
 		
-		// Listen for comments changed event from handler
-		handler.onCommentsChanged(async () => {
+		// Listen for notes changed event from handler
+		handler.onNotesChanged(async () => {
 			await updateUIComponents(folder);
 		});
 	}
 
 	// Register tree view after all workspaces are initialized
 	await treeProvider.refresh();
-	const treeView = vscode.window.createTreeView("shadowCommentsView", {
+	const treeView = vscode.window.createTreeView("vibeNotesView", {
 		treeDataProvider: treeProvider,
 		showCollapseAll: true,
 	});
 	context.subscriptions.push(treeView);
 
 	// Get handler for current workspace
-	const getCurrentHandler = (): MemoFileHandler | undefined => {
+	const getCurrentHandler = (): NoteFileHandler | undefined => {
 		const activeEditor = vscode.window.activeTextEditor;
 		if (!activeEditor) {
 			return undefined;
@@ -109,20 +109,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			return undefined;
 		}
 
-		return memoHandlers.get(workspaceFolder.uri.fsPath);
+		return noteHandlers.get(workspaceFolder.uri.fsPath);
 	};
 
 	// Generate markdown file content
-	const generateMarkdownFileContent = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
-		const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
+	const generateMarkdownFileContent = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
 		const now = new Date().toLocaleString();
 		
-		return `# Shadow Comments
+		return `# Vibe Notes
 
 > You can now fully edit this markdown file!
-> - Edit existing comment content
-> - Add new comments
-> - Delete comments  
+> - Edit existing note content
+> - Add new notes
+> - Delete notes  
 > - Change line numbers
 > Save the file (Ctrl+S / Cmd+S) to apply all changes.
 
@@ -134,21 +134,21 @@ ${enhancedMarkdown}`;
 	};
 	
 	// Generate enhanced markdown with clickable links
-	const generateEnhancedMarkdown = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
-		if (comments.length === 0) {
-			return "*No comments found*";
+	const generateEnhancedMarkdown = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+		if (notes.length === 0) {
+			return "*No notes found*";
 		}
 
 		// Group by file path and sort
-		const groupedByFile = comments.reduce(
-			(acc, comment) => {
-				if (!acc[comment.filePath]) {
-					acc[comment.filePath] = [];
+		const groupedByFile = notes.reduce(
+			(acc, note) => {
+				if (!acc[note.filePath]) {
+					acc[note.filePath] = [];
 				}
-				acc[comment.filePath].push(comment);
+				acc[note.filePath].push(note);
 				return acc;
 			},
-			{} as Record<string, ReviewComment[]>,
+			{} as Record<string, Note[]>,
 		);
 
 		// Sort file paths
@@ -171,27 +171,27 @@ ${enhancedMarkdown}`;
 			markdownSections.push(`## [${filePath}](${filePath})`);
 			markdownSections.push("");
 
-			// Sort comments by line number
-			const fileComments = groupedByFile[filePath].sort((a, b) => a.startLine - b.startLine);
+			// Sort notes by line number
+			const fileNotes = groupedByFile[filePath].sort((a, b) => a.startLine - b.startLine);
 
-			// Each comment
-			for (const comment of fileComments) {
+			// Each note
+			for (const note of fileNotes) {
 				// Create line range text
-				const lineSpec = comment.startLine === comment.endLine 
-					? `L${comment.startLine}`
-					: `L${comment.startLine}-${comment.endLine}`;
+				const lineSpec = note.startLine === note.endLine 
+					? `L${note.startLine}`
+					: `L${note.startLine}-${note.endLine}`;
 
 				// Get code content for the first line
 				let codePreview = "";
-				if (fileLines.length > 0 && comment.startLine <= fileLines.length) {
+				if (fileLines.length > 0 && note.startLine <= fileLines.length) {
 					// Get the line (1-based index)
-					const codeLine = fileLines[comment.startLine - 1];
+					const codeLine = fileLines[note.startLine - 1];
 					// Remove leading whitespace
 					codePreview = codeLine.trimStart();
 				}
 
 				// Create clickable link to specific line (using relative path)
-				const lineLink = `${filePath}#L${comment.startLine}`;
+				const lineLink = `${filePath}#L${note.startLine}`;
 				
 				// Line number as link
 				markdownSections.push(`### [${lineSpec}](${lineLink})`);
@@ -203,7 +203,7 @@ ${enhancedMarkdown}`;
 					markdownSections.push("");
 				}
 				
-				markdownSections.push(comment.comment);
+				markdownSections.push(note.comment);
 				markdownSections.push("");
 			}
 		}
@@ -218,43 +218,43 @@ ${enhancedMarkdown}`;
 
 
 
-	// Find comment at current cursor position
-	const findCommentAtCursor = async (): Promise<{
-		comment: ReviewComment | undefined;
-		handler: MemoFileHandler | undefined;
+	// Find note at current cursor position
+	const findNoteAtCursor = async (): Promise<{
+		note: Note | undefined;
+		handler: NoteFileHandler | undefined;
 		workspaceFolder: vscode.WorkspaceFolder | undefined;
 	}> => {
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
-			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+			return { note: undefined, handler: undefined, workspaceFolder: undefined };
 		}
 
 		const handler = getCurrentHandler();
 		if (!handler) {
 			vscode.window.showErrorMessage("No workspace folder found");
-			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+			return { note: undefined, handler: undefined, workspaceFolder: undefined };
 		}
 
 		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
 		if (!workspaceFolder) {
-			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+			return { note: undefined, handler: undefined, workspaceFolder: undefined };
 		}
 
 		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
 		const currentLine = editor.selection.active.line + 1;
 
-		const comments = await handler.readComments();
-		const comment = comments.find(
+		const notes = await handler.readNotes();
+		const note = notes.find(
 			(c) => c.filePath === relativePath && currentLine >= c.startLine && currentLine <= c.endLine,
 		);
 
-		return { comment, handler, workspaceFolder };
+		return { note, handler, workspaceFolder };
 	};
 
-	// Common function to edit a comment
-	const editComment = async (
-		comment: ReviewComment,
-		handler: MemoFileHandler,
+	// Common function to edit a note
+	const editNote = async (
+		note: Note,
+		handler: NoteFileHandler,
 		workspaceFolder: vscode.WorkspaceFolder,
 	): Promise<void> => {
 		const tempFileManager = tempFileManagers.get(workspaceFolder.uri.fsPath);
@@ -264,23 +264,23 @@ ${enhancedMarkdown}`;
 		}
 
 		// Create header for the temp file
-		const header = `# Edit Shadow Comment
-# File: ${comment.filePath}
-# Line: ${comment.startLine === comment.endLine ? comment.startLine : `${comment.startLine}-${comment.endLine}`}
+		const header = `# Edit Vibe Note
+# File: ${note.filePath}
+# Line: ${note.startLine === note.endLine ? note.startLine : `${note.startLine}-${note.endLine}`}
 # 
-# Edit your comment below and save the file (Ctrl+S / Cmd+S).
+# Edit your note below and save the file (Ctrl+S / Cmd+S).
 # Close without saving to cancel.
 # ========================================
 
 `;
 
-		// Open temp file for comment editing
-		await tempFileManager.openTempFile("EditComment", header + comment.comment, async (content) => {
+		// Open temp file for note editing
+		await tempFileManager.openTempFile("EditNote", header + note.comment, async (content) => {
 			if (content === null) {
 				return;
 			}
 
-			// Extract comment text (remove header)
+			// Extract note text (remove header)
 			const lines = content.split("\n");
 			const separatorIndex = lines.findIndex((line) => line.includes("========================================"));
 
@@ -288,62 +288,62 @@ ${enhancedMarkdown}`;
 				return;
 			}
 
-			const commentLines = lines.slice(separatorIndex + 1);
-			const newComment = commentLines.join("\n").trim();
+			const noteLines = lines.slice(separatorIndex + 1);
+			const newNote = noteLines.join("\n").trim();
 
-			if (!newComment || newComment === comment.comment) {
+			if (!newNote || newNote === note.comment) {
 				return;
 			}
 
-			await handler.updateComment(comment, newComment);
+			await handler.updateNote(note, newNote);
 			await updateUIComponents(workspaceFolder);
-			vscode.window.showInformationMessage("Comment updated successfully");
+			vscode.window.showInformationMessage("Note updated successfully");
 		});
 	};
 
-	// Common function to delete a comment
-	const deleteComment = async (
-		comment: ReviewComment,
-		handler: MemoFileHandler,
+	// Common function to delete a note
+	const deleteNote = async (
+		note: Note,
+		handler: NoteFileHandler,
 		workspaceFolder: vscode.WorkspaceFolder,
 	): Promise<void> => {
 		// Confirm deletion
-		const confirmation = await vscode.window.showWarningMessage("Delete this comment?", "Delete", "Cancel");
+		const confirmation = await vscode.window.showWarningMessage("Delete this note?", "Delete", "Cancel");
 
 		if (confirmation === "Delete") {
-			await handler.deleteComment(comment);
+			await handler.deleteNote(note);
 			await updateUIComponents(workspaceFolder);
 		}
 	};
 
-	// Common function to find comment at specific line
-	const findCommentAtLine = async (
+	// Common function to find note at specific line
+	const findNoteAtLine = async (
 		uri: vscode.Uri,
 		line: number,
 	): Promise<{
-		comment: ReviewComment | undefined;
-		handler: MemoFileHandler | undefined;
+		note: Note | undefined;
+		handler: NoteFileHandler | undefined;
 		workspaceFolder: vscode.WorkspaceFolder | undefined;
 	}> => {
 		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 		if (!workspaceFolder) {
-			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+			return { note: undefined, handler: undefined, workspaceFolder: undefined };
 		}
 
-		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		const handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 		if (!handler) {
-			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+			return { note: undefined, handler: undefined, workspaceFolder: undefined };
 		}
 
 		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
-		const comments = await handler.readComments();
-		const comment = comments.find((c) => c.filePath === relativePath && line >= c.startLine && line <= c.endLine);
+		const notes = await handler.readNotes();
+		const note = notes.find((c) => c.filePath === relativePath && line >= c.startLine && line <= c.endLine);
 
-		return { comment, handler, workspaceFolder };
+		return { note, handler, workspaceFolder };
 	};
 
-	// Command: Add comment to line
-	const addCommentCommand = vscode.commands.registerCommand("shadow-comments.addComment", async () => {
+	// Command: Add note to line
+	const addNoteCommand = vscode.commands.registerCommand("vibe-notes.addNote", async () => {
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
 			vscode.window.showErrorMessage("No active editor");
@@ -369,23 +369,23 @@ ${enhancedMarkdown}`;
 		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
 
 		// Create header for the temp file
-		const header = `# Add Shadow Comment
+		const header = `# Add Vibe Note
 # File: ${relativePath}
 # Line: ${startLine === endLine ? startLine : `${startLine}-${endLine}`}
 # 
-# Enter your comment below and save the file (Ctrl+S / Cmd+S).
+# Enter your note below and save the file (Ctrl+S / Cmd+S).
 # Close without saving to cancel.
 # ========================================
 
 `;
 
-		// Open temp file for comment input
-		await tempFileManager.openTempFile("AddComment", header, async (content) => {
+		// Open temp file for note input
+		await tempFileManager.openTempFile("AddNote", header, async (content) => {
 			if (content === null) {
 				return;
 			}
 
-			// Extract comment text (remove header)
+			// Extract note text (remove header)
 			const lines = content.split("\n");
 			const separatorIndex = lines.findIndex((line) => line.includes("========================================"));
 
@@ -393,38 +393,38 @@ ${enhancedMarkdown}`;
 				return;
 			}
 
-			const commentLines = lines.slice(separatorIndex + 1);
-			const comment = commentLines.join("\n").trim();
+			const noteLines = lines.slice(separatorIndex + 1);
+			const note = noteLines.join("\n").trim();
 
-			if (!comment) {
+			if (!note) {
 				return;
 			}
 
-			await handler.addComment(relativePath, startLine, endLine, comment);
+			await handler.addNote(relativePath, startLine, endLine, note);
 			await updateUIComponents(workspaceFolder);
-			vscode.window.showInformationMessage("Comment added successfully");
+			vscode.window.showInformationMessage("Note added successfully");
 		});
 	});
 
 	// Command: Open as markdown (temporary file)
-	const showMarkdownCommand = vscode.commands.registerCommand("shadow-comments.showMarkdown", async () => {
+	const showMarkdownCommand = vscode.commands.registerCommand("vibe-notes.showMarkdown", async () => {
 		// Get handler and workspace folder for copy operation
 		let workspaceFolder: vscode.WorkspaceFolder | undefined;
-		let handler: MemoFileHandler | undefined;
+		let handler: NoteFileHandler | undefined;
 
 		// First try to get based on active editor
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
 			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
 			if (workspaceFolder) {
-				handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+				handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 			}
 		}
 
 		// If no active editor, use first workspace
 		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
 			workspaceFolder = vscode.workspace.workspaceFolders[0];
-			handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+			handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 		}
 
 		if (!handler || !workspaceFolder) {
@@ -433,11 +433,11 @@ ${enhancedMarkdown}`;
 		}
 
 		// Generate enhanced markdown content
-		const comments = await handler.readComments();
-		const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
+		const notes = await handler.readNotes();
+		const markdownContent = await generateMarkdownFileContent(notes, workspaceFolder);
 
-		// Write to .comments.local.md in workspace root
-		const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+		// Write to .notes.local.md in workspace root
+		const markdownPath = path.join(workspaceFolder.uri.fsPath, '.notes.local.md');
 		const markdownUri = vscode.Uri.file(markdownPath);
 		
 		try {
@@ -456,11 +456,11 @@ ${enhancedMarkdown}`;
 		}
 	});
 
-	// Command: Go to comment
-	const goToCommentCommand = vscode.commands.registerCommand(
-		"shadow-comments.goToComment",
-		async (comment: any, workspaceFolder?: vscode.WorkspaceFolder) => {
-			if (!comment || !comment.filePath) {
+	// Command: Go to note
+	const goToNoteCommand = vscode.commands.registerCommand(
+		"vibe-notes.goToNote",
+		async (note: any, workspaceFolder?: vscode.WorkspaceFolder) => {
+			if (!note || !note.filePath) {
 				return;
 			}
 
@@ -470,89 +470,89 @@ ${enhancedMarkdown}`;
 				return;
 			}
 
-			const fullPath = path.join(folder.uri.fsPath, comment.filePath);
+			const fullPath = path.join(folder.uri.fsPath, note.filePath);
 			const document = await vscode.workspace.openTextDocument(fullPath);
 			const editor = await vscode.window.showTextDocument(document);
 
-			// Navigate to the comment position
-			const position = new vscode.Position(comment.startLine - 1, 0);
+			// Navigate to the note position
+			const position = new vscode.Position(note.startLine - 1, 0);
 			const range = new vscode.Range(position, position);
 			editor.selection = new vscode.Selection(position, position);
 			editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
 		},
 	);
 
-	// Command: Edit comment at current position
-	const editCommentAtCursorCommand = vscode.commands.registerCommand(
-		"shadow-comments.editCommentAtCursor",
+	// Command: Edit note at current position
+	const editNoteAtCursorCommand = vscode.commands.registerCommand(
+		"vibe-notes.editNoteAtCursor",
 		async () => {
-			const { comment, handler, workspaceFolder } = await findCommentAtCursor();
+			const { note, handler, workspaceFolder } = await findNoteAtCursor();
 
-			if (!comment || !handler || !workspaceFolder) {
-				if (comment === undefined && handler && workspaceFolder) {
-					vscode.window.showInformationMessage("No comment found at current line");
+			if (!note || !handler || !workspaceFolder) {
+				if (note === undefined && handler && workspaceFolder) {
+					vscode.window.showInformationMessage("No note found at current line");
 				}
 				return;
 			}
 
-			await editComment(comment, handler, workspaceFolder);
+			await editNote(note, handler, workspaceFolder);
 		},
 	);
 
-	// Command: Delete comment at current position
-	const deleteCommentAtCursorCommand = vscode.commands.registerCommand(
-		"shadow-comments.deleteCommentAtCursor",
+	// Command: Delete note at current position
+	const deleteNoteAtCursorCommand = vscode.commands.registerCommand(
+		"vibe-notes.deleteNoteAtCursor",
 		async () => {
-			const { comment, handler, workspaceFolder } = await findCommentAtCursor();
+			const { note, handler, workspaceFolder } = await findNoteAtCursor();
 
-			if (!comment || !handler || !workspaceFolder) {
-				if (comment === undefined && handler && workspaceFolder) {
-					vscode.window.showInformationMessage("No comment found at current line");
+			if (!note || !handler || !workspaceFolder) {
+				if (note === undefined && handler && workspaceFolder) {
+					vscode.window.showInformationMessage("No note found at current line");
 				}
 				return;
 			}
 
-			await deleteComment(comment, handler, workspaceFolder);
+			await deleteNote(note, handler, workspaceFolder);
 		},
 	);
 
-	// Command: Edit comment at specific line (for CodeLens)
-	const editCommentAtLineCommand = vscode.commands.registerCommand(
-		"shadow-comments.editCommentAtLine",
+	// Command: Edit note at specific line (for CodeLens)
+	const editNoteAtLineCommand = vscode.commands.registerCommand(
+		"vibe-notes.editNoteAtLine",
 		async (uri: vscode.Uri, line: number) => {
-			const { comment, handler, workspaceFolder } = await findCommentAtLine(uri, line);
-			if (comment && handler && workspaceFolder) {
-				await editComment(comment, handler, workspaceFolder);
+			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line);
+			if (note && handler && workspaceFolder) {
+				await editNote(note, handler, workspaceFolder);
 			}
 		},
 	);
 
-	// Command: Delete comment at specific line (for CodeLens)
-	const deleteCommentAtLineCommand = vscode.commands.registerCommand(
-		"shadow-comments.deleteCommentAtLine",
+	// Command: Delete note at specific line (for CodeLens)
+	const deleteNoteAtLineCommand = vscode.commands.registerCommand(
+		"vibe-notes.deleteNoteAtLine",
 		async (uri: vscode.Uri, line: number) => {
-			const { comment, handler, workspaceFolder } = await findCommentAtLine(uri, line);
-			if (comment && handler && workspaceFolder) {
-				await deleteComment(comment, handler, workspaceFolder);
+			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line);
+			if (note && handler && workspaceFolder) {
+				await deleteNote(note, handler, workspaceFolder);
 			}
 		},
 	);
 
 	// Command: Refresh tree view
-	const refreshTreeCommand = vscode.commands.registerCommand("shadow-comments.refreshTree", async () => {
+	const refreshTreeCommand = vscode.commands.registerCommand("vibe-notes.refreshTree", async () => {
 		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
 			const workspaceFolder = vscode.workspace.workspaceFolders[0];
-			const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+			const markdownPath = path.join(workspaceFolder.uri.fsPath, '.notes.local.md');
 			
 			try {
 				// Check if markdown file exists
 				await vscode.workspace.fs.stat(vscode.Uri.file(markdownPath));
 				
 				// If markdown exists, regenerate it (this will trigger TreeView refresh via watcher)
-				const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+				const handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 				if (handler) {
-					const comments = await handler.readComments();
-					const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
+					const notes = await handler.readNotes();
+					const markdownContent = await generateMarkdownFileContent(notes, workspaceFolder);
 					
 					await vscode.workspace.fs.writeFile(
 						vscode.Uri.file(markdownPath), 
@@ -572,7 +572,7 @@ ${enhancedMarkdown}`;
 	});
 
 	// Command: Save to Git Notes
-	const saveToGitNotesCommand = vscode.commands.registerCommand("shadow-comments.saveToGitNotes", async () => {
+	const saveToGitNotesCommand = vscode.commands.registerCommand("vibe-notes.saveToGitNotes", async () => {
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");
@@ -589,23 +589,23 @@ ${enhancedMarkdown}`;
 		}
 
 		// Get the handler for the workspace
-		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		const handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 		if (!handler) {
 			vscode.window.showErrorMessage("No memo handler found");
 			return;
 		}
 
 		try {
-			// Read the current comments
-			const comments = await handler.readComments();
-			if (comments.length === 0) {
-				vscode.window.showInformationMessage("No comments to save");
+			// Read the current notes
+			const notes = await handler.readNotes();
+			if (notes.length === 0) {
+				vscode.window.showInformationMessage("No notes to save");
 				return;
 			}
 
 			// Show confirmation dialog
 			const confirmation = await vscode.window.showWarningMessage(
-				"Save comments to Git Notes? This will overwrite any existing notes on the current HEAD commit.",
+				"Save notes to Git Notes? This will overwrite any existing notes on the current HEAD commit.",
 				"Save",
 				"Cancel",
 			);
@@ -649,14 +649,14 @@ ${enhancedMarkdown}`;
 				gitProcess.stdin.end();
 			});
 
-			vscode.window.showInformationMessage("Comments saved to git notes");
+			vscode.window.showInformationMessage("Notes saved to git notes");
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to save to git notes: ${error}`);
 		}
 	});
 
 	// Command: Setup .gitignore
-	const setupGitignoreCommand = vscode.commands.registerCommand("shadow-comments.setupGitignore", async () => {
+	const setupGitignoreCommand = vscode.commands.registerCommand("vibe-notes.setupGitignore", async () => {
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");
@@ -668,13 +668,13 @@ ${enhancedMarkdown}`;
 
 	// Register all commands
 	context.subscriptions.push(
-		addCommentCommand,
+		addNoteCommand,
 		showMarkdownCommand,
-		goToCommentCommand,
-		editCommentAtCursorCommand,
-		deleteCommentAtCursorCommand,
-		editCommentAtLineCommand,
-		deleteCommentAtLineCommand,
+		goToNoteCommand,
+		editNoteAtCursorCommand,
+		deleteNoteAtCursorCommand,
+		editNoteAtLineCommand,
+		deleteNoteAtLineCommand,
 		refreshTreeCommand,
 		saveToGitNotesCommand,
 		setupGitignoreCommand,
@@ -712,7 +712,7 @@ ${enhancedMarkdown}`;
 	// Clean up handlers on deactivation
 	context.subscriptions.push({
 		dispose: () => {
-			memoHandlers.forEach((handler) => {
+			noteHandlers.forEach((handler) => {
 				handler.dispose();
 			});
 			decorationProviders.forEach((decorationProvider) => {

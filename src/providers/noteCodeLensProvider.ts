@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { MemoFileHandler } from "../util/memoFileHandler";
-import { ReviewComment } from "../util/reviewCommentParser";
+import { NoteFileHandler } from "../util/noteFileHandler";
+import { Note } from "../util/noteParser";
 
-export class CommentCodeLensProvider implements vscode.CodeLensProvider {
+export class NoteCodeLensProvider implements vscode.CodeLensProvider {
 	private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 	public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
 	constructor(
-		private memoHandler: MemoFileHandler,
+		private noteHandler: NoteFileHandler,
 		private workspaceFolder: vscode.WorkspaceFolder,
 	) {}
 
@@ -22,27 +22,27 @@ export class CommentCodeLensProvider implements vscode.CodeLensProvider {
 		// Get relative path for this document
 		const relativePath = path.relative(this.workspaceFolder.uri.fsPath, document.uri.fsPath);
 
-		// Get all comments for this file
-		const comments = await this.memoHandler.getCommentsForFile(document.uri.fsPath);
+		// Get all notes for this file
+		const notes = await this.noteHandler.getNotesForFile(document.uri.fsPath);
 
-		// Create CodeLens for each comment
-		for (const comment of comments) {
-			if (comment.filePath === relativePath) {
-				// Create range for the first line of the comment
-				const range = new vscode.Range(comment.startLine - 1, 0, comment.startLine - 1, 0);
+		// Create CodeLens for each note
+		for (const note of notes) {
+			if (note.filePath === relativePath) {
+				// Create range for the first line of the note
+				const range = new vscode.Range(note.startLine - 1, 0, note.startLine - 1, 0);
 
 				// Create Edit CodeLens
 				const editLens = new vscode.CodeLens(range, {
 					title: "$(edit) Edit",
-					command: "shadow-comments.editCommentAtLine",
-					arguments: [document.uri, comment.startLine],
+					command: "vibe-notes.editNoteAtLine",
+					arguments: [document.uri, note.startLine],
 				});
 
 				// Create Delete CodeLens
 				const deleteLens = new vscode.CodeLens(range, {
 					title: "$(trash) Delete",
-					command: "shadow-comments.deleteCommentAtLine",
-					arguments: [document.uri, comment.startLine],
+					command: "vibe-notes.deleteNoteAtLine",
+					arguments: [document.uri, note.startLine],
 				});
 
 				codeLenses.push(editLens, deleteLens);
