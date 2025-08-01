@@ -50,8 +50,8 @@
 			},
 			{
 				"command": "shadow-comments.showMarkdown",
-				"title": "Shadow Comments: Show Comments as Markdown",
-				"icon": "$(markdown)"
+				"title": "Shadow Comments: Open Comments as Markdown",
+				"icon": "$(go-to-file)"
 			},
 			{
 				"command": "shadow-comments.showJson",

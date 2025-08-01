@@ -97,6 +97,69 @@ export async function activate(context: vscode.ExtensionContext) {
 		return memoHandlers.get(workspaceFolder.uri.fsPath);
 	};
 
+	// Generate enhanced markdown with clickable links
+	const generateEnhancedMarkdown = (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): string => {
+		if (comments.length === 0) {
+			return "*No comments found*";
+		}
+
+		// Group by file path and sort
+		const groupedByFile = comments.reduce(
+			(acc, comment) => {
+				if (!acc[comment.filePath]) {
+					acc[comment.filePath] = [];
+				}
+				acc[comment.filePath].push(comment);
+				return acc;
+			},
+			{} as Record<string, ReviewComment[]>,
+		);
+
+		// Sort file paths
+		const sortedFilePaths = Object.keys(groupedByFile).sort();
+
+		// Generate markdown
+		const markdownSections: string[] = [];
+
+		for (const filePath of sortedFilePaths) {
+			// File path header with clickable link (using relative path)
+			markdownSections.push(`## [${filePath}](${filePath})`);
+			markdownSections.push("");
+
+			// Sort comments by line number
+			const fileComments = groupedByFile[filePath].sort((a, b) => a.startLine - b.startLine);
+
+			// Each comment
+			for (const comment of fileComments) {
+				// Line number header with clickable link
+				let lineText: string;
+				if (comment.startLine === comment.endLine) {
+					lineText = comment.startColumn !== undefined 
+						? `Line ${comment.startLine}:${comment.startColumn}`
+						: `Line ${comment.startLine}`;
+				} else {
+					lineText = comment.startColumn !== undefined && comment.endColumn !== undefined
+						? `Lines ${comment.startLine}:${comment.startColumn}-${comment.endLine}:${comment.endColumn}`
+						: `Lines ${comment.startLine}-${comment.endLine}`;
+				}
+
+				// Create clickable link to specific line (using relative path)
+				const lineLink = `${filePath}#L${comment.startLine}`;
+				markdownSections.push(`### [${lineText}](${lineLink})`);
+				markdownSections.push("");
+				markdownSections.push(comment.comment);
+				markdownSections.push("");
+			}
+		}
+
+		// Remove the last empty line
+		if (markdownSections[markdownSections.length - 1] === "") {
+			markdownSections.pop();
+		}
+
+		return markdownSections.join("\n");
+	};
+
 	// Get handler for copy operations (fallback to first workspace if no active editor)
 	const getHandlerForCopy = (): MemoFileHandler | undefined => {
 		// First try to get handler based on active editor
@@ -317,24 +380,66 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
-	// Command: Show as markdown
+	// Command: Open as markdown (temporary file)
 	const showMarkdownCommand = vscode.commands.registerCommand("shadow-comments.showMarkdown", async () => {
-		const handler = getHandlerForCopy();
-		if (!handler) {
+		// Get handler and workspace folder for copy operation
+		let workspaceFolder: vscode.WorkspaceFolder | undefined;
+		let handler: MemoFileHandler | undefined;
+
+		// First try to get based on active editor
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+			if (workspaceFolder) {
+				handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+			}
+		}
+
+		// If no active editor, use first workspace
+		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			workspaceFolder = vscode.workspace.workspaceFolders[0];
+			handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		}
+
+		if (!handler || !workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");
 			return;
 		}
-		const markdown = await handler.getMarkdownContent();
-		const doc = await vscode.workspace.openTextDocument({
-			content: markdown,
-			language: "markdown",
-		});
-		const editor = await vscode.window.showTextDocument(doc);
-		// Select all content
-		const firstLine = doc.lineAt(0);
-		const lastLine = doc.lineAt(doc.lineCount - 1);
-		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-		editor.selection = new vscode.Selection(range.start, range.end);
+
+		// Generate enhanced markdown content
+		const now = new Date().toLocaleString();
+		const comments = await handler.readComments();
+		const enhancedMarkdown = generateEnhancedMarkdown(comments, workspaceFolder);
+		
+		const markdownContent = `# Shadow Comments
+
+> This is a read-only view of your shadow comments.
+> Editing functionality coming soon.
+
+Generated: ${now}
+
+---
+
+${enhancedMarkdown}`;
+
+		// Write to .comments.local.md in workspace root
+		const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+		const markdownUri = vscode.Uri.file(markdownPath);
+		
+		try {
+			// Write the markdown file
+			await vscode.workspace.fs.writeFile(
+				markdownUri, 
+				Buffer.from(markdownContent, 'utf8')
+			);
+			
+			// Open the file in editor
+			const doc = await vscode.workspace.openTextDocument(markdownUri);
+			await vscode.window.showTextDocument(doc);
+			
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to create markdown file: ${error}`);
+		}
 	});
 
 	// Command: Show as JSON
