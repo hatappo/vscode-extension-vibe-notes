@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
 import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser";
-import { parseMarkdownComments, applyMarkdownChanges } from "./markdownParser";
+import { parseMarkdownComments, applyMarkdownChanges, parseMarkdownToComments, ParsedComment } from "./markdownParser";
 
 export class MemoFileHandler {
 	private static readonly COMMENTS_DIR = ".comments";  // Still needed for temp files
@@ -217,6 +217,29 @@ export class MemoFileHandler {
 			return "";
 		}
 	}
+	
+	/**
+	 * Replace all comments with new ones
+	 */
+	async replaceAllComments(newComments: ParsedComment[]): Promise<void> {
+		try {
+			// Build new file content
+			const lines: string[] = [];
+			
+			for (const comment of newComments) {
+				const lineSpec = this.formatLineSpec(comment.startLine, comment.endLine);
+				const escapedComment = this.escapeComment(comment.comment);
+				lines.push(`${comment.filePath}#L${lineSpec} "${escapedComment}"`);
+			}
+			
+			// Write to file
+			const content = lines.join("\n") + (lines.length > 0 ? "\n" : "");
+			await fs.writeFile(this.memoFilePath, content, "utf8");
+			
+		} catch (error) {
+			throw new Error(`Failed to replace comments: ${error}`);
+		}
+	}
 
 	/**
 	 * Sync changes from markdown file to comments file
@@ -231,28 +254,31 @@ export class MemoFileHandler {
 				return;
 			}
 			
-			// Read both files
+			// Read markdown file
 			const markdownContent = await fs.readFile(this.markdownFilePath, "utf8");
-			const existingComments = await this.readComments();
 			
-			// Parse markdown
-			const markdownComments = parseMarkdownComments(markdownContent);
+			// Parse markdown to get all comments
+			const { comments, errors } = parseMarkdownToComments(markdownContent);
 			
-			// Apply changes (only updates existing comments)
-			const { updatedComments, hasChanges } = applyMarkdownChanges(existingComments, markdownComments);
-			
-			if (hasChanges) {
-				// Update comments file
-				this.isUpdatingFromMarkdown = true;
-				try {
-					for (const updatedComment of updatedComments) {
-						await this.updateComment(updatedComment, updatedComment.comment);
-					}
-					vscode.window.showInformationMessage(`Updated ${updatedComments.length} comment(s) from markdown`);
-				} finally {
-					this.isUpdatingFromMarkdown = false;
-				}
+			// Check for errors
+			if (errors.length > 0) {
+				vscode.window.showErrorMessage(
+					`Failed to parse markdown: ${errors.length} error(s)\n${errors.join("\n")}`
+				);
+				return;
 			}
+			
+			// Replace all comments
+			this.isUpdatingFromMarkdown = true;
+			try {
+				await this.replaceAllComments(comments);
+				vscode.window.showInformationMessage(
+					`Updated comments from markdown: ${comments.length} comment(s)`
+				);
+			} finally {
+				this.isUpdatingFromMarkdown = false;
+			}
+			
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to sync from markdown: ${error}`);
 		}

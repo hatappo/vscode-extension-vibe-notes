@@ -396,9 +396,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		
 		const markdownContent = `# Shadow Comments
 
-> You can now edit comment content directly in this markdown file!
-> Save the file (Ctrl+S / Cmd+S) to update your comments.
-> Note: Only existing comment content can be edited. Adding/removing comments is not yet supported.
+> You can now fully edit this markdown file!
+> - Edit existing comment content
+> - Add new comments
+> - Delete comments  
+> - Change line numbers
+> Save the file (Ctrl+S / Cmd+S) to apply all changes.
 
 Generated: ${now}
 
