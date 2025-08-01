@@ -49,22 +49,22 @@
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "Vibe Notes: Open/Refresh Markdown",
+				"title": "Open/Refresh Markdown",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "Vibe Notes: Refresh View",
+				"title": "Refresh View",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "Vibe Notes: Save to Git Notes",
+				"title": "Save to Git Notes",
 				"icon": "$(save)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "Vibe Notes: Setup .gitignore",
+				"title": "Setup .gitignore",
 				"icon": "$(gear)"
 			}
 		],
