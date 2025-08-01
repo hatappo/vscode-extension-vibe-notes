@@ -9,6 +9,7 @@ import { MultiWorkspaceTreeProvider } from "./views/multiWorkspaceTreeProvider";
 import { ReviewComment } from "./util/reviewCommentParser";
 import { CommentCodeLensProvider } from "./providers/commentCodeLensProvider";
 import { TempFileManager } from "./util/tempFileManager";
+import { promptGitignoreSetup } from "./util/gitignoreHelper";
 
 // Global map to store temp file managers for cleanup on deactivate
 const tempFileManagers = new Map<string, TempFileManager>();
@@ -23,6 +24,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Create a single tree provider for all workspaces
 	const treeProvider = new MultiWorkspaceTreeProvider();
+	
+	// Update UI components after comment changes
+	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
+		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+		if (decorationProvider) {
+			await decorationProvider.updateDecorations();
+		}
+
+		const codeLensProvider = codeLensProviders.get(workspaceFolder.uri.fsPath);
+		if (codeLensProvider) {
+			codeLensProvider.refresh();
+		}
+
+		await treeProvider.refresh();
+	};
 
 	// Initialize handlers for existing workspace folders
 	if (!vscode.workspace.workspaceFolders) {
@@ -62,16 +78,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Set up file watcher
 		const watcher = handler.getFileWatcher();
 		if (watcher) {
-			const handleFileChange = async () => {
-				await decorationProvider.updateDecorations();
-				await treeProvider.refresh();
-				codeLensProvider.refresh();
-			};
-
-			watcher.onDidChange(handleFileChange);
-			watcher.onDidCreate(handleFileChange);
-			watcher.onDidDelete(handleFileChange);
+			watcher.onDidChange(() => updateUIComponents(folder));
+			watcher.onDidCreate(() => updateUIComponents(folder));
+			watcher.onDidDelete(() => updateUIComponents(folder));
 		}
+		
+		// Listen for comments changed event from handler
+		handler.onCommentsChanged(async () => {
+			await updateUIComponents(folder);
+		});
 	}
 
 	// Register tree view after all workspaces are initialized
@@ -97,37 +112,111 @@ export async function activate(context: vscode.ExtensionContext) {
 		return memoHandlers.get(workspaceFolder.uri.fsPath);
 	};
 
-	// Get handler for copy operations (fallback to first workspace if no active editor)
-	const getHandlerForCopy = (): MemoFileHandler | undefined => {
-		// First try to get handler based on active editor
-		const handler = getCurrentHandler();
-		if (handler) {
-			return handler;
+	// Generate markdown file content
+	const generateMarkdownFileContent = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+		const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
+		const now = new Date().toLocaleString();
+		
+		return `# Shadow Comments
+
+> You can now fully edit this markdown file!
+> - Edit existing comment content
+> - Add new comments
+> - Delete comments  
+> - Change line numbers
+> Save the file (Ctrl+S / Cmd+S) to apply all changes.
+
+Generated: ${now}
+
+---
+
+${enhancedMarkdown}`;
+	};
+	
+	// Generate enhanced markdown with clickable links
+	const generateEnhancedMarkdown = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+		if (comments.length === 0) {
+			return "*No comments found*";
 		}
 
-		// If no active editor, use first workspace
-		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-			const firstWorkspace = vscode.workspace.workspaceFolders[0];
-			return memoHandlers.get(firstWorkspace.uri.fsPath);
+		// Group by file path and sort
+		const groupedByFile = comments.reduce(
+			(acc, comment) => {
+				if (!acc[comment.filePath]) {
+					acc[comment.filePath] = [];
+				}
+				acc[comment.filePath].push(comment);
+				return acc;
+			},
+			{} as Record<string, ReviewComment[]>,
+		);
+
+		// Sort file paths
+		const sortedFilePaths = Object.keys(groupedByFile).sort();
+
+		// Generate markdown
+		const markdownSections: string[] = [];
+
+		for (const filePath of sortedFilePaths) {
+			// Try to read the file content
+			let fileLines: string[] = [];
+			try {
+				const fullPath = path.join(workspaceFolder.uri.fsPath, filePath);
+				const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(fullPath));
+				fileLines = Buffer.from(fileContent).toString('utf8').split('\n');
+			} catch (error) {
+				// File not found or unable to read, continue without code preview
+			}
+			// File path header with clickable link (using relative path)
+			markdownSections.push(`## [${filePath}](${filePath})`);
+			markdownSections.push("");
+
+			// Sort comments by line number
+			const fileComments = groupedByFile[filePath].sort((a, b) => a.startLine - b.startLine);
+
+			// Each comment
+			for (const comment of fileComments) {
+				// Create line range text
+				const lineSpec = comment.startLine === comment.endLine 
+					? `L${comment.startLine}`
+					: `L${comment.startLine}-${comment.endLine}`;
+
+				// Get code content for the first line
+				let codePreview = "";
+				if (fileLines.length > 0 && comment.startLine <= fileLines.length) {
+					// Get the line (1-based index)
+					const codeLine = fileLines[comment.startLine - 1];
+					// Remove leading whitespace
+					codePreview = codeLine.trimStart();
+				}
+
+				// Create clickable link to specific line (using relative path)
+				const lineLink = `${filePath}#L${comment.startLine}`;
+				
+				// Line number as link
+				markdownSections.push(`### [${lineSpec}](${lineLink})`);
+				markdownSections.push("");
+				
+				// Code preview in quote block
+				if (codePreview) {
+					markdownSections.push(`> ${codePreview}`);
+					markdownSections.push("");
+				}
+				
+				markdownSections.push(comment.comment);
+				markdownSections.push("");
+			}
 		}
 
-		return undefined;
+		// Remove the last empty line
+		if (markdownSections[markdownSections.length - 1] === "") {
+			markdownSections.pop();
+		}
+
+		return markdownSections.join("\n");
 	};
 
-	// Update UI components after comment changes
-	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
-		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-		if (decorationProvider) {
-			await decorationProvider.updateDecorations();
-		}
 
-		const codeLensProvider = codeLensProviders.get(workspaceFolder.uri.fsPath);
-		if (codeLensProvider) {
-			codeLensProvider.refresh();
-		}
-
-		await treeProvider.refresh();
-	};
 
 	// Find comment at current cursor position
 	const findCommentAtCursor = async (): Promise<{
@@ -317,45 +406,54 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
-	// Command: Show as markdown
+	// Command: Open as markdown (temporary file)
 	const showMarkdownCommand = vscode.commands.registerCommand("shadow-comments.showMarkdown", async () => {
-		const handler = getHandlerForCopy();
-		if (!handler) {
-			vscode.window.showErrorMessage("No workspace folder found");
-			return;
-		}
-		const markdown = await handler.getMarkdownContent();
-		const doc = await vscode.workspace.openTextDocument({
-			content: markdown,
-			language: "markdown",
-		});
-		const editor = await vscode.window.showTextDocument(doc);
-		// Select all content
-		const firstLine = doc.lineAt(0);
-		const lastLine = doc.lineAt(doc.lineCount - 1);
-		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-		editor.selection = new vscode.Selection(range.start, range.end);
-	});
+		// Get handler and workspace folder for copy operation
+		let workspaceFolder: vscode.WorkspaceFolder | undefined;
+		let handler: MemoFileHandler | undefined;
 
-	// Command: Show as JSON
-	const showJsonCommand = vscode.commands.registerCommand("shadow-comments.showJson", async () => {
-		const handler = getHandlerForCopy();
-		if (!handler) {
+		// First try to get based on active editor
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+			if (workspaceFolder) {
+				handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+			}
+		}
+
+		// If no active editor, use first workspace
+		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			workspaceFolder = vscode.workspace.workspaceFolders[0];
+			handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		}
+
+		if (!handler || !workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");
 			return;
 		}
+
+		// Generate enhanced markdown content
 		const comments = await handler.readComments();
-		const json = JSON.stringify(comments, null, 2);
-		const doc = await vscode.workspace.openTextDocument({
-			content: json,
-			language: "json",
-		});
-		const editor = await vscode.window.showTextDocument(doc);
-		// Select all content
-		const firstLine = doc.lineAt(0);
-		const lastLine = doc.lineAt(doc.lineCount - 1);
-		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-		editor.selection = new vscode.Selection(range.start, range.end);
+		const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
+
+		// Write to .comments.local.md in workspace root
+		const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+		const markdownUri = vscode.Uri.file(markdownPath);
+		
+		try {
+			// Write the markdown file
+			await vscode.workspace.fs.writeFile(
+				markdownUri, 
+				Buffer.from(markdownContent, 'utf8')
+			);
+			
+			// Open the file in editor
+			const doc = await vscode.workspace.openTextDocument(markdownUri);
+			await vscode.window.showTextDocument(doc);
+			
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to create markdown file: ${error}`);
+		}
 	});
 
 	// Command: Go to comment
@@ -377,7 +475,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const editor = await vscode.window.showTextDocument(document);
 
 			// Navigate to the comment position
-			const position = new vscode.Position(comment.startLine - 1, comment.startColumn || 0);
+			const position = new vscode.Position(comment.startLine - 1, 0);
 			const range = new vscode.Range(position, position);
 			editor.selection = new vscode.Selection(position, position);
 			editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
@@ -442,38 +540,35 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Command: Refresh tree view
 	const refreshTreeCommand = vscode.commands.registerCommand("shadow-comments.refreshTree", async () => {
-		await treeProvider.refresh();
-		vscode.window.showInformationMessage("Comments refreshed");
-	});
-
-	// Command: Open comments file
-	const openCommentsFileCommand = vscode.commands.registerCommand("shadow-comments.openCommentsFile", async () => {
-		// Get the first workspace folder
-		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-		if (!workspaceFolder) {
-			vscode.window.showErrorMessage("No workspace folder found");
-			return;
-		}
-
-		// Construct the path to comments file
-		const commentsDir = path.join(workspaceFolder.uri.fsPath, ".comments");
-		const commentsFilePath = path.join(commentsDir, "comments.local.txt");
-		const fileUri = vscode.Uri.file(commentsFilePath);
-
-		try {
-			// Open the file in the editor
-			const document = await vscode.workspace.openTextDocument(fileUri);
-			const editor = await vscode.window.showTextDocument(document);
-			// Select all content
-			if (document.lineCount > 0) {
-				const firstLine = document.lineAt(0);
-				const lastLine = document.lineAt(document.lineCount - 1);
-				const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-				editor.selection = new vscode.Selection(range.start, range.end);
+		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			const workspaceFolder = vscode.workspace.workspaceFolders[0];
+			const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+			
+			try {
+				// Check if markdown file exists
+				await vscode.workspace.fs.stat(vscode.Uri.file(markdownPath));
+				
+				// If markdown exists, regenerate it (this will trigger TreeView refresh via watcher)
+				const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+				if (handler) {
+					const comments = await handler.readComments();
+					const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
+					
+					await vscode.workspace.fs.writeFile(
+						vscode.Uri.file(markdownPath), 
+						Buffer.from(markdownContent, 'utf8')
+					);
+				}
+			} catch {
+				// Markdown file doesn't exist, refresh TreeView directly
+				await treeProvider.refresh();
 			}
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to open comments file: ${error}`);
+		} else {
+			// No workspace, just refresh TreeView
+			await treeProvider.refresh();
 		}
+		
+		vscode.window.showInformationMessage("View refreshed");
 	});
 
 	// Command: Save to Git Notes
@@ -560,19 +655,29 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Command: Setup .gitignore
+	const setupGitignoreCommand = vscode.commands.registerCommand("shadow-comments.setupGitignore", async () => {
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			vscode.window.showErrorMessage("No workspace folder found");
+			return;
+		}
+
+		await promptGitignoreSetup(workspaceFolder);
+	});
+
 	// Register all commands
 	context.subscriptions.push(
 		addCommentCommand,
 		showMarkdownCommand,
-		showJsonCommand,
 		goToCommentCommand,
 		editCommentAtCursorCommand,
 		deleteCommentAtCursorCommand,
 		editCommentAtLineCommand,
 		deleteCommentAtLineCommand,
 		refreshTreeCommand,
-		openCommentsFileCommand,
 		saveToGitNotesCommand,
+		setupGitignoreCommand,
 	);
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(

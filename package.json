@@ -50,28 +50,23 @@
 			},
 			{
 				"command": "shadow-comments.showMarkdown",
-				"title": "Shadow Comments: Show Comments as Markdown",
+				"title": "Shadow Comments: Open/Refresh Markdown",
 				"icon": "$(markdown)"
 			},
 			{
-				"command": "shadow-comments.showJson",
-				"title": "Shadow Comments: Show Comments as JSON",
-				"icon": "$(json)"
-			},
-			{
-				"command": "shadow-comments.openCommentsFile",
-				"title": "Shadow Comments: Open Comments File",
-				"icon": "$(file-text)"
-			},
-			{
 				"command": "shadow-comments.refreshTree",
-				"title": "Shadow Comments: Refresh Comments",
+				"title": "Shadow Comments: Refresh View",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "shadow-comments.saveToGitNotes",
 				"title": "Shadow Comments: Save to Git Notes",
 				"icon": "$(save)"
+			},
+			{
+				"command": "shadow-comments.setupGitignore",
+				"title": "Shadow Comments: Setup .gitignore",
+				"icon": "$(gear)"
 			}
 		],
 		"menus": {
@@ -99,24 +94,19 @@
 					"group": "navigation@0"
 				},
 				{
-					"command": "shadow-comments.openCommentsFile",
+					"command": "shadow-comments.showMarkdown",
 					"when": "view == shadowCommentsView",
 					"group": "navigation@1"
 				},
 				{
-					"command": "shadow-comments.showMarkdown",
+					"command": "shadow-comments.saveToGitNotes",
 					"when": "view == shadowCommentsView",
 					"group": "navigation@2"
 				},
 				{
-					"command": "shadow-comments.showJson",
+					"command": "shadow-comments.setupGitignore",
 					"when": "view == shadowCommentsView",
 					"group": "navigation@3"
-				},
-				{
-					"command": "shadow-comments.saveToGitNotes",
-					"when": "view == shadowCommentsView",
-					"group": "navigation@4"
 				}
 			]
 		},

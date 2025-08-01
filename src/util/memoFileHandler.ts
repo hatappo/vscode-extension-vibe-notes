@@ -1,42 +1,60 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
-import { parseReviewFileWithErrors, ReviewComment, convertToMarkdown } from "./reviewCommentParser";
+import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser";
+import { parseMarkdownComments, applyMarkdownChanges, parseMarkdownToComments, ParsedComment } from "./markdownParser";
+import { promptGitignoreSetup } from "./gitignoreHelper";
 
 export class MemoFileHandler {
 	private static readonly COMMENTS_DIR = ".comments";
-	private static readonly DEFAULT_MEMO_FILE = "comments.local.txt";
-	private static readonly LEGACY_MEMO_FILE = ".local.comments.txt";
+	private static readonly DEFAULT_MEMO_FILE = "data.txt";
+	private static readonly MARKDOWN_FILE = ".comments.local.md";
 	private memoFilePath: string;
-	private legacyFilePath: string;
+	private markdownFilePath: string;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
+	private markdownWatcher: vscode.FileSystemWatcher | undefined;
+	private isUpdatingFromMarkdown = false;
+	private _onCommentsChanged = new vscode.EventEmitter<void>();
+	public readonly onCommentsChanged = this._onCommentsChanged.event;
 
 	constructor(private workspaceFolder: vscode.WorkspaceFolder) {
-		const commentsDir = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR);
-		this.memoFilePath = path.join(commentsDir, MemoFileHandler.DEFAULT_MEMO_FILE);
-		this.legacyFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.LEGACY_MEMO_FILE);
+		// Data file in .comments directory
+		this.memoFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR, MemoFileHandler.DEFAULT_MEMO_FILE);
+		// Markdown file in workspace root for user editing
+		this.markdownFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.MARKDOWN_FILE);
 	}
 
 	/**
 	 * Initialize the memo file handler and set up file watching
 	 */
 	async initialize(): Promise<void> {
-		// Migrate from legacy file if needed
-		await this.migrateFromLegacyFile();
-
-		// Ensure comments directory exists
+		// Ensure comments directory exists for temp files
 		await this.ensureCommentsDirectory();
 
 		// Set up file watcher (even if file doesn't exist yet)
 		const pattern = new vscode.RelativePattern(
 			this.workspaceFolder,
-			`${MemoFileHandler.COMMENTS_DIR}/${MemoFileHandler.DEFAULT_MEMO_FILE}`,
+			path.join(MemoFileHandler.COMMENTS_DIR, MemoFileHandler.DEFAULT_MEMO_FILE),
 		);
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+		
+		// Set up markdown file watcher
+		const markdownPattern = new vscode.RelativePattern(
+			this.workspaceFolder,
+			MemoFileHandler.MARKDOWN_FILE,
+		);
+		this.markdownWatcher = vscode.workspace.createFileSystemWatcher(markdownPattern);
+		
+		// Handle markdown file changes
+		this.markdownWatcher.onDidChange(async () => {
+			if (!this.isUpdatingFromMarkdown) {
+				await this.syncFromMarkdown();
+			}
+		});
 	}
 
 	/**
-	 * Ensure comments directory exists
+	 * Ensure comments directory exists (needed for temp files)
 	 */
 	private async ensureCommentsDirectory(): Promise<void> {
 		const commentsDir = path.join(this.workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR);
@@ -48,57 +66,13 @@ export class MemoFileHandler {
 	}
 
 	/**
-	 * Migrate from legacy file location
-	 */
-	private async migrateFromLegacyFile(): Promise<void> {
-		try {
-			// Check if legacy file exists
-			try {
-				await fs.access(this.legacyFilePath);
-			} catch {
-				// Legacy file doesn't exist, nothing to migrate
-				return;
-			}
-
-			// Check if new file already exists
-			try {
-				await fs.access(this.memoFilePath);
-				// New file already exists, don't migrate
-				return;
-			} catch {
-				// New file doesn't exist, proceed with migration
-			}
-
-			// Ensure comments directory exists
-			await this.ensureCommentsDirectory();
-
-			// Read legacy file content
-			const content = await fs.readFile(this.legacyFilePath, "utf8");
-
-			// Write to new location
-			await fs.writeFile(this.memoFilePath, content, "utf8");
-
-			// Delete legacy file
-			await fs.unlink(this.legacyFilePath);
-
-			vscode.window.showInformationMessage("Comments file migrated to new location: .comments/comments.local.txt");
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to migrate comments file: ${error}`);
-		}
-	}
-
-	/**
 	 * Format line specification
 	 */
-	private formatLineSpec(startLine: number, endLine: number, startColumn?: number, endColumn?: number): string {
+	private formatLineSpec(startLine: number, endLine: number): string {
 		if (startLine === endLine) {
-			return startColumn !== undefined ? `${startLine},${startColumn}` : `${startLine}`;
+			return `${startLine}`;
 		} else {
-			if (startColumn !== undefined && endColumn !== undefined) {
-				return `${startLine},${startColumn}-${endLine},${endColumn}`;
-			} else {
-				return `${startLine}-${endLine}`;
-			}
+			return `${startLine}-${endLine}`;
 		}
 	}
 
@@ -145,8 +119,6 @@ export class MemoFileHandler {
 		startLine: number,
 		endLine: number,
 		comment: string,
-		startColumn?: number,
-		endColumn?: number,
 	): Promise<void> {
 		try {
 			// Ensure comments directory exists
@@ -154,14 +126,16 @@ export class MemoFileHandler {
 
 			// Read existing content, or use empty string if file doesn't exist
 			let content = "";
+			let isFirstComment = false;
 			try {
 				content = await fs.readFile(this.memoFilePath, "utf8");
 			} catch {
 				// File doesn't exist yet, will be created
+				isFirstComment = true;
 			}
 
 			// Format the new comment with new format
-			const lineSpec = this.formatLineSpec(startLine, endLine, startColumn, endColumn);
+			const lineSpec = this.formatLineSpec(startLine, endLine);
 			const escapedComment = this.escapeComment(comment);
 			const newLine = `${filePath}#L${lineSpec} "${escapedComment}"`;
 
@@ -170,6 +144,12 @@ export class MemoFileHandler {
 			await fs.writeFile(this.memoFilePath, newContent, "utf8");
 
 			vscode.window.showInformationMessage("Comment added successfully");
+			
+			// Prompt for .gitignore setup on first comment
+			if (isFirstComment) {
+				// Run async without waiting
+				promptGitignoreSetup(this.workspaceFolder);
+			}
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to add comment: ${error}`);
 		}
@@ -189,8 +169,6 @@ export class MemoFileHandler {
 					const lineSpec = this.formatLineSpec(
 						oldComment.startLine,
 						oldComment.endLine,
-						oldComment.startColumn,
-						oldComment.endColumn,
 					);
 					const escapedComment = this.escapeComment(newCommentText);
 					return `${oldComment.filePath}#L${lineSpec} "${escapedComment}"`;
@@ -251,13 +229,81 @@ export class MemoFileHandler {
 			return "";
 		}
 	}
+	
+	/**
+	 * Replace all comments with new ones
+	 */
+	async replaceAllComments(newComments: ParsedComment[]): Promise<void> {
+		try {
+			// Build new file content
+			const lines: string[] = [];
+			
+			for (const comment of newComments) {
+				const lineSpec = this.formatLineSpec(comment.startLine, comment.endLine);
+				const escapedComment = this.escapeComment(comment.comment);
+				lines.push(`${comment.filePath}#L${lineSpec} "${escapedComment}"`);
+			}
+			
+			// Write to file
+			const content = lines.join("\n") + (lines.length > 0 ? "\n" : "");
+			await fs.writeFile(this.memoFilePath, content, "utf8");
+			
+		} catch (error) {
+			throw new Error(`Failed to replace comments: ${error}`);
+		}
+	}
 
 	/**
-	 * Get content as markdown
+	 * Sync changes from markdown file to comments file
 	 */
-	async getMarkdownContent(): Promise<string> {
-		const comments = await this.readComments();
-		return convertToMarkdown(comments);
+	private async syncFromMarkdown(): Promise<void> {
+		try {
+			// Check if markdown file exists
+			try {
+				await fs.access(this.markdownFilePath);
+			} catch {
+				// Markdown file doesn't exist, nothing to sync
+				return;
+			}
+			
+			// Read markdown file
+			const markdownContent = await fs.readFile(this.markdownFilePath, "utf8");
+			
+			// Parse markdown to get all comments
+			const { comments, errors } = parseMarkdownToComments(markdownContent);
+			
+			// Check for errors
+			if (errors.length > 0) {
+				vscode.window.showErrorMessage(
+					`Failed to parse markdown: ${errors.length} error(s)\n${errors.join("\n")}`
+				);
+				return;
+			}
+			
+			// Replace all comments
+			this.isUpdatingFromMarkdown = true;
+			try {
+				await this.replaceAllComments(comments);
+				vscode.window.showInformationMessage(
+					`Updated comments from markdown: ${comments.length} comment(s)`
+				);
+				
+				// Emit event to update UI
+				this._onCommentsChanged.fire();
+			} finally {
+				this.isUpdatingFromMarkdown = false;
+			}
+			
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to sync from markdown: ${error}`);
+		}
+	}
+	
+	/**
+	 * Get markdown file watcher
+	 */
+	getMarkdownWatcher(): vscode.FileSystemWatcher | undefined {
+		return this.markdownWatcher;
 	}
 
 	/**
@@ -265,5 +311,7 @@ export class MemoFileHandler {
 	 */
 	dispose(): void {
 		this.fileWatcher?.dispose();
+		this.markdownWatcher?.dispose();
+		this._onCommentsChanged.dispose();
 	}
 }

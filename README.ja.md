@@ -20,22 +20,24 @@
 
 ## 保存場所
 
-コメントは`.comments/comments.local.txt`に保存されます。
+コメントデータは`.comments`フォルダ以下に保存されます。
 
 > [!IMPORTANT]
-> `.comments` ディレクトリを `.gitignore` に追加してください。
+> `.comments` ディレクトリと `.comments.local.md` ファイルを `.gitignore` に追加してください。
 
-```
-src/file.ts#L10 "TODO: この関数をリファクタリングする"
-src/file.ts#L20-25 "このロジックは見直しが必要"
+```bash
+# .gitignoreに追加
+echo "" >> .gitignore
+echo "# Shadow Comments" >> .gitignore
+echo ".comments/" >> .gitignore
+echo ".comments.local.md" >> .gitignore
 ```
 
 ## コマンド
 
 コマンドパレット（Cmd/Ctrl+Shift+P）からアクセス：
 - `Shadow Comments: Add Comment to Line`
-- `Shadow Comments: Show Comments as Markdown`
-- `Shadow Comments: Show Comments as JSON`
+- `Shadow Comments: Open Comments as Markdown`
 - `Shadow Comments: Save to Git Notes`
 
 ## 使い方のコツ

@@ -20,22 +20,24 @@ Keep private code comments that live in the shadows - never touching your source
 
 ## Storage
 
-Comments are stored in `.comments/comments.local.txt`.
+Comment data is stored in the `.comments` folder.
 
 > [!IMPORTANT]
-> Add the `.comments` directory to your `.gitignore`.
+> Add the `.comments` directory and `.comments.local.md` file to your `.gitignore`.
 
-```
-src/file.ts#L10 "TODO: Refactor this function"
-src/file.ts#L20-25 "This logic needs review"
+```bash
+# Add to .gitignore
+echo "" >> .gitignore
+echo "# Shadow Comments" >> .gitignore
+echo ".comments/" >> .gitignore
+echo ".comments.local.md" >> .gitignore
 ```
 
 ## Commands
 
 Access via Command Palette (Cmd/Ctrl+Shift+P):
 - `Shadow Comments: Add Comment to Line`
-- `Shadow Comments: Show Comments as Markdown`
-- `Shadow Comments: Show Comments as JSON`
+- `Shadow Comments: Open Comments as Markdown`
 - `Shadow Comments: Save to Git Notes`
 
 ## Tips
