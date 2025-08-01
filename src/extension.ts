@@ -47,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	for (const folder of vscode.workspace.workspaceFolders) {
 		const handler = new NoteFileHandler(folder);
-		handler.initialize();
+		await handler.initialize();
 		noteHandlers.set(folder.uri.fsPath, handler);
 
 		// Create decoration provider
