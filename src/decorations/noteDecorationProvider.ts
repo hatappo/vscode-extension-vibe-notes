@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { MemoFileHandler } from "../util/memoFileHandler";
-import { ReviewComment } from "../util/reviewCommentParser";
+import { NoteFileHandler } from "../util/noteFileHandler";
+import { Note } from "../util/noteParser";
 
-export class CommentDecorationProvider {
+export class NoteDecorationProvider {
 	private gutterDecorationType: vscode.TextEditorDecorationType;
 	private inlineDecorationTypes = new Map<string, vscode.TextEditorDecorationType>();
 	private decorations = new Map<string, vscode.DecorationOptions[]>();
@@ -13,7 +13,7 @@ export class CommentDecorationProvider {
 	>();
 
 	constructor(
-		private memoHandler: MemoFileHandler,
+		private noteHandler: NoteFileHandler,
 		private workspaceFolder: vscode.WorkspaceFolder,
 	) {
 		// Create gutter decoration type
@@ -31,7 +31,7 @@ export class CommentDecorationProvider {
 	 * Update decorations for all visible editors
 	 */
 	async updateDecorations(): Promise<void> {
-		const comments = await this.memoHandler.readComments();
+		const notes = await this.noteHandler.readNotes();
 		this.decorations.clear();
 		this.inlineDecorations.clear();
 
@@ -41,9 +41,9 @@ export class CommentDecorationProvider {
 		}
 		this.inlineDecorationTypes.clear();
 
-		// Group comments by file
-		for (const comment of comments) {
-			const filePath = path.join(this.workspaceFolder.uri.fsPath, comment.filePath);
+		// Group notes by file
+		for (const note of notes) {
+			const filePath = path.join(this.workspaceFolder.uri.fsPath, note.filePath);
 			if (!this.decorations.has(filePath)) {
 				this.decorations.set(filePath, []);
 				this.inlineDecorations.set(filePath, []);
@@ -51,19 +51,19 @@ export class CommentDecorationProvider {
 
 			// Create gutter decoration for the first line only
 			const gutterDecoration: vscode.DecorationOptions = {
-				range: new vscode.Range(comment.startLine - 1, 0, comment.startLine - 1, 0),
+				range: new vscode.Range(note.startLine - 1, 0, note.startLine - 1, 0),
 			};
 			this.decorations.get(filePath)!.push(gutterDecoration);
 
 			// Create inline decoration for the first line
-			const lines = comment.comment.split("\n");
+			const lines = note.comment.split("\n");
 			const firstLineText = lines[0];
 			const isMultiline = lines.length > 1;
 			const truncatedText = firstLineText.length > 40 ? firstLineText.substring(0, 40) + ".." : firstLineText;
 			const displayText = `💬 ${truncatedText}${isMultiline ? " .. " : ""}`;
 
-			// Create a unique decoration type for this comment
-			const decorationKey = `${filePath}:${comment.startLine}`;
+			// Create a unique decoration type for this note
+			const decorationKey = `${filePath}:${note.startLine}`;
 			const inlineDecorationType = vscode.window.createTextEditorDecorationType({
 				after: {
 					contentText: displayText,
@@ -78,10 +78,10 @@ export class CommentDecorationProvider {
 			// Get the editor to find the line end position
 			const editor = vscode.window.visibleTextEditors.find((e) => e.document.uri.fsPath === filePath);
 			if (editor) {
-				const line = editor.document.lineAt(comment.startLine - 1);
+				const line = editor.document.lineAt(note.startLine - 1);
 				const inlineDecoration: vscode.DecorationOptions = {
-					range: new vscode.Range(comment.startLine - 1, line.text.length, comment.startLine - 1, line.text.length),
-					hoverMessage: new vscode.MarkdownString(`**Comment:**\n\n${comment.comment.replace(/\n/g, "  \n")}`),
+					range: new vscode.Range(note.startLine - 1, line.text.length, note.startLine - 1, line.text.length),
+					hoverMessage: new vscode.MarkdownString(`**Note:**\n\n${note.comment.replace(/\n/g, "  \n")}`),
 				};
 				this.inlineDecorations.get(filePath)!.push({ decoration: inlineDecoration, type: inlineDecorationType });
 			}
@@ -117,17 +117,17 @@ export class CommentDecorationProvider {
 	/**
 	 * Get comment at specific position
 	 */
-	async getCommentAtPosition(
+	async getNoteAtPosition(
 		document: vscode.TextDocument,
 		position: vscode.Position,
-	): Promise<ReviewComment | undefined> {
+	): Promise<Note | undefined> {
 		const relativePath = path.relative(this.workspaceFolder.uri.fsPath, document.uri.fsPath);
-		const comments = await this.memoHandler.getCommentsForFile(document.uri.fsPath);
+		const notes = await this.noteHandler.getNotesForFile(document.uri.fsPath);
 		const lineNumber = position.line + 1; // Convert to 1-based
 
-		return comments.find(
-			(comment) =>
-				comment.filePath === relativePath && lineNumber >= comment.startLine && lineNumber <= comment.endLine,
+		return notes.find(
+			(note) =>
+				note.filePath === relativePath && lineNumber >= note.startLine && lineNumber <= note.endLine,
 		);
 	}
 

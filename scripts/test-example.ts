@@ -1,19 +1,23 @@
-import { convertToMarkdown, parseReviewComment, ReviewComment } from "../src/util/reviewCommentParser";
+import { parseNote, Note } from "../src/util/noteParser";
 
 const testLines: string[] = [
 	'src/extension.ts#L7 "Make this function name simpler and clearer"',
-	'src/extension.ts#L7,10 "Column 10 needs attention"',
-	'src/extension.ts#L13-15 "These comments are unnecessary.\\nPlease remove them."',
-	'src/extension.ts#L7,10-8,12 "This range needs refactoring"',
+	'src/extension.ts#L13-15 "These notes are unnecessary.\\nPlease remove them."',
 	'src/test/extension.test.ts#L11 "Please add an explanation. Change quotes from \\"\\" to \'\'."',
 ];
 
 testLines.forEach((line: string) => {
 	console.log("Input:", line);
-	console.log("Parsed:", parseReviewComment(line));
+	console.log("Parsed:", parseNote(line));
 	console.log("---");
 });
 
-console.log("\n=== Markdown Output ===\n");
-const allComments = testLines.map(parseReviewComment).filter((c): c is ReviewComment => c !== null);
-console.log(convertToMarkdown(allComments));
+console.log("\n=== Note Parsing Test Complete ===\n");
+const allNotes = testLines.map(parseNote).filter((n): n is Note => n !== null);
+console.log(`Parsed ${allNotes.length} notes successfully.`);
+allNotes.forEach((note, index) => {
+	console.log(`\nNote ${index + 1}:`);
+	console.log(`  File: ${note.filePath}`);
+	console.log(`  Lines: ${note.startLine}-${note.endLine}`);
+	console.log(`  Content: ${note.comment}`);
+});

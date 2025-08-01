@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
  */
 export async function checkGitignoreEntries(workspaceFolder: vscode.WorkspaceFolder): Promise<{
 	hasGitignore: boolean;
-	hasCommentsDir: boolean;
+	hasNotesDir: boolean;
 	hasMarkdownFile: boolean;
 }> {
 	const gitignorePath = path.join(workspaceFolder.uri.fsPath, ".gitignore");
@@ -17,27 +17,27 @@ export async function checkGitignoreEntries(workspaceFolder: vscode.WorkspaceFol
 		const lines = content.split("\n").map(line => line.trim());
 		
 		// Check for various possible formats
-		const hasCommentsDir = lines.some(line => 
-			line === ".comments/" || 
-			line === ".comments" ||
-			line === "/.comments/" ||
-			line === "/.comments"
+		const hasNotesDir = lines.some(line => 
+			line === ".notes/" || 
+			line === ".notes" ||
+			line === "/.notes/" ||
+			line === "/.notes"
 		);
 		
 		const hasMarkdownFile = lines.some(line => 
-			line === ".comments.local.md" ||
-			line === "/.comments.local.md"
+			line === ".notes.local.md" ||
+			line === "/.notes.local.md"
 		);
 		
 		return {
 			hasGitignore: true,
-			hasCommentsDir,
+			hasNotesDir,
 			hasMarkdownFile
 		};
 	} catch {
 		return {
 			hasGitignore: false,
-			hasCommentsDir: false,
+			hasNotesDir: false,
 			hasMarkdownFile: false
 		};
 	}
@@ -48,7 +48,7 @@ export async function checkGitignoreEntries(workspaceFolder: vscode.WorkspaceFol
  */
 export async function addToGitignore(
 	workspaceFolder: vscode.WorkspaceFolder,
-	addCommentsDir: boolean,
+	addNotesDir: boolean,
 	addMarkdownFile: boolean
 ): Promise<void> {
 	const gitignorePath = path.join(workspaceFolder.uri.fsPath, ".gitignore");
@@ -74,19 +74,19 @@ export async function addToGitignore(
 		}
 		
 		// Add comment header if adding any entry
-		if (addCommentsDir || addMarkdownFile) {
+		if (addNotesDir || addMarkdownFile) {
 			if (content.length > 0) {
 				additions.push("");
 			}
-			additions.push("# Shadow Comments");
+			additions.push("# Vibe Notes");
 		}
 		
-		if (addCommentsDir) {
-			additions.push(".comments/");
+		if (addNotesDir) {
+			additions.push(".notes/");
 		}
 		
 		if (addMarkdownFile) {
-			additions.push(".comments.local.md");
+			additions.push(".notes.local.md");
 		}
 		
 		// Write back
@@ -105,7 +105,7 @@ export async function addToGitignore(
 export async function promptGitignoreSetup(workspaceFolder: vscode.WorkspaceFolder): Promise<boolean> {
 	const status = await checkGitignoreEntries(workspaceFolder);
 	
-	if (status.hasCommentsDir && status.hasMarkdownFile) {
+	if (status.hasNotesDir && status.hasMarkdownFile) {
 		vscode.window.showInformationMessage(".gitignore is already configured correctly");
 		
 		// Open .gitignore file to show current configuration
@@ -117,16 +117,16 @@ export async function promptGitignoreSetup(workspaceFolder: vscode.WorkspaceFold
 	}
 	
 	const missingItems: string[] = [];
-	if (!status.hasCommentsDir) {
-		missingItems.push(".comments/");
+	if (!status.hasNotesDir) {
+		missingItems.push(".notes/");
 	}
 	if (!status.hasMarkdownFile) {
-		missingItems.push(".comments.local.md");
+		missingItems.push(".notes.local.md");
 	}
 	
 	const message = status.hasGitignore
-		? `Add Shadow Comments entries to .gitignore?\nMissing: ${missingItems.join(", ")}`
-		: "Create .gitignore and add Shadow Comments entries?";
+		? `Add Vibe Notes entries to .gitignore?\nMissing: ${missingItems.join(", ")}`
+		: "Create .gitignore and add Vibe Notes entries?";
 	
 	const choice = await vscode.window.showInformationMessage(
 		message,
@@ -136,7 +136,7 @@ export async function promptGitignoreSetup(workspaceFolder: vscode.WorkspaceFold
 	
 	if (choice === "Yes") {
 		try {
-			await addToGitignore(workspaceFolder, !status.hasCommentsDir, !status.hasMarkdownFile);
+			await addToGitignore(workspaceFolder, !status.hasNotesDir, !status.hasMarkdownFile);
 			vscode.window.showInformationMessage(".gitignore updated successfully");
 			
 			// Open .gitignore file

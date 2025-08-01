@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { MemoFileHandler } from "../util/memoFileHandler";
-import { ReviewComment } from "../util/reviewCommentParser";
+import { NoteFileHandler } from "../util/noteFileHandler";
+import { Note } from "../util/noteParser";
 
-interface WorkspaceComments {
+interface WorkspaceNotes {
 	workspaceFolder: vscode.WorkspaceFolder;
-	handler: MemoFileHandler;
-	comments: ReviewComment[];
+	handler: NoteFileHandler;
+	notes: Note[];
 }
 
 export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeItem> {
@@ -15,26 +15,26 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 	>();
 	readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-	private workspaceData: Map<string, WorkspaceComments> = new Map();
+	private workspaceData: Map<string, WorkspaceNotes> = new Map();
 
 	constructor() {}
 
-	addWorkspace(workspaceFolder: vscode.WorkspaceFolder, handler: MemoFileHandler): void {
+	addWorkspace(workspaceFolder: vscode.WorkspaceFolder, handler: NoteFileHandler): void {
 		this.workspaceData.set(workspaceFolder.uri.fsPath, {
 			workspaceFolder,
 			handler,
-			comments: [],
+			notes: [],
 		});
 	}
 
 	async refresh(): Promise<void> {
-		await this.loadAllComments();
+		await this.loadAllNotes();
 		this._onDidChangeTreeData.fire();
 	}
 
-	async loadAllComments(): Promise<void> {
+	async loadAllNotes(): Promise<void> {
 		for (const [key, data] of this.workspaceData) {
-			data.comments = await data.handler.readComments();
+			data.notes = await data.handler.readNotes();
 		}
 	}
 
@@ -62,10 +62,10 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 				return Promise.resolve(this.getFileItems(data));
 			}
 		} else if (element.contextValue === "file") {
-			// File level - show comments
+			// File level - show notes
 			const data = this.workspaceData.get(element.workspacePath!);
 			if (data) {
-				return Promise.resolve(this.getCommentItems(data, element.filePath!));
+				return Promise.resolve(this.getNoteItems(data, element.filePath!));
 			}
 		}
 		return Promise.resolve([]);
@@ -77,7 +77,7 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		for (const [key, data] of this.workspaceData) {
 			const item = new TreeItem(
 				data.workspaceFolder.name,
-				`${data.comments.length} comment${data.comments.length !== 1 ? "s" : ""}`,
+				`${data.notes.length} note${data.notes.length !== 1 ? "s" : ""}`,
 				vscode.TreeItemCollapsibleState.Expanded,
 				"workspace",
 			);
@@ -89,13 +89,13 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		return items;
 	}
 
-	private getFileItems(data: WorkspaceComments): TreeItem[] {
+	private getFileItems(data: WorkspaceNotes): TreeItem[] {
 		const fileMap = new Map<string, number>();
 
-		// Count comments per file
-		for (const comment of data.comments) {
-			const count = fileMap.get(comment.filePath) || 0;
-			fileMap.set(comment.filePath, count + 1);
+		// Count notes per file
+		for (const note of data.notes) {
+			const count = fileMap.get(note.filePath) || 0;
+			fileMap.set(note.filePath, count + 1);
 		}
 
 		// Create file items
@@ -103,7 +103,7 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		for (const [filePath, count] of fileMap) {
 			const item = new TreeItem(
 				filePath,
-				`${count} comment${count > 1 ? "s" : ""}`,
+				`${count} note${count > 1 ? "s" : ""}`,
 				vscode.TreeItemCollapsibleState.Collapsed,
 				"file",
 			);
@@ -116,28 +116,28 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		return items.sort((a, b) => a.label!.toString().localeCompare(b.label!.toString()));
 	}
 
-	private getCommentItems(data: WorkspaceComments, filePath: string): TreeItem[] {
-		const fileComments = data.comments.filter((c) => c.filePath === filePath);
+	private getNoteItems(data: WorkspaceNotes, filePath: string): TreeItem[] {
+		const fileNotes = data.notes.filter((n) => n.filePath === filePath);
 
-		return fileComments.map((comment) => {
+		return fileNotes.map((note) => {
 			let label: string;
-			if (comment.startLine === comment.endLine) {
-				label = `L${comment.startLine}`;
+			if (note.startLine === note.endLine) {
+				label = `L${note.startLine}`;
 			} else {
-				label = `L${comment.startLine}-${comment.endLine}`;
+				label = `L${note.startLine}-${note.endLine}`;
 			}
 
-			const item = new TreeItem(label, comment.comment, vscode.TreeItemCollapsibleState.None, "comment");
+			const item = new TreeItem(label, note.comment, vscode.TreeItemCollapsibleState.None, "note");
 
-			item.tooltip = comment.comment;
-			item.comment = comment;
+			item.tooltip = note.comment;
+			item.note = note;
 			item.workspacePath = data.workspaceFolder.uri.fsPath;
 
-			// Add command to navigate to comment location
+			// Add command to navigate to note location
 			item.command = {
-				command: "shadow-comments.goToComment",
-				title: "Go to Comment",
-				arguments: [comment, data.workspaceFolder],
+				command: "vibe-notes.goToNote",
+				title: "Go to Note",
+				arguments: [note, data.workspaceFolder],
 			};
 
 			return item;
@@ -147,7 +147,7 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 
 export class TreeItem extends vscode.TreeItem {
 	public filePath?: string;
-	public comment?: ReviewComment;
+	public note?: Note;
 	public workspacePath?: string;
 
 	constructor(

@@ -1,5 +1,5 @@
-/** Review comment */
-interface ReviewComment {
+/** Note */
+interface Note {
 	filePath: string;
 	startLine: number;
 	endLine: number;
@@ -10,7 +10,7 @@ interface ReviewComment {
 /** Parse result */
 interface ParseResult {
 	success: boolean;
-	comments?: ReviewComment[];
+	notes?: Note[];
 	errors?: ParseError[];
 }
 
@@ -21,22 +21,22 @@ interface ParseError {
 	error: string;
 }
 
-/** Regular expression for parsing review comments */
+/** Regular expression for parsing notes */
 // Matches: file.ts#L7 or file.ts#L7-9
-const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+const noteLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
 
 
-/** Parse a single line review comment */
-function parseReviewComment(line: string): ReviewComment | null {
-	const match = line.match(reviewLineRegex);
+/** Parse a single line note */
+function parseNote(line: string): Note | null {
+	const match = line.match(noteLineRegex);
 	if (!match) {
 		return null;
 	}
 
-	const [, filePath, positionSpec, rawComment] = match;
+	const [, filePath, positionSpec, rawNote] = match;
 
-	// Unescape the comment
-	const comment = rawComment.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+	// Unescape the note
+	const note = rawNote.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
 
 	// Parse positions
 	let startLine: number;
@@ -57,15 +57,15 @@ function parseReviewComment(line: string): ReviewComment | null {
 		filePath,
 		startLine,
 		endLine,
-		comment,
+		comment: note,
 		raw: line, // Holds the entire original line
 	};
 }
 
-/** Parse multiple line review comments (with error handling) */
-function parseReviewFileWithErrors(content: string): ParseResult {
+/** Parse multiple line notes (with error handling) */
+function parseNoteFileWithErrors(content: string): ParseResult {
 	const lines = content.split("\n");
-	const comments: ReviewComment[] = [];
+	const notes: Note[] = [];
 	const errors: ParseError[] = [];
 
 	lines.forEach((line, index) => {
@@ -73,9 +73,9 @@ function parseReviewFileWithErrors(content: string): ParseResult {
 			return;
 		} // Skip empty lines
 
-		const parsed = parseReviewComment(line);
+		const parsed = parseNote(line);
 		if (parsed) {
-			comments.push(parsed);
+			notes.push(parsed);
 		} else {
 			errors.push({
 				line: index + 1,
@@ -87,11 +87,11 @@ function parseReviewFileWithErrors(content: string): ParseResult {
 
 	return {
 		success: errors.length === 0,
-		comments,
+		notes,
 		errors: errors.length > 0 ? errors : undefined,
 	};
 }
 
-export { parseReviewComment, parseReviewFileWithErrors };
+export { parseNote, parseNoteFileWithErrors };
 
-export type { ReviewComment, ParseResult, ParseError };
+export type { Note, ParseResult, ParseError };
