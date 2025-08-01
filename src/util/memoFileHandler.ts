@@ -2,16 +2,22 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
 import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser";
+import { parseMarkdownComments, applyMarkdownChanges } from "./markdownParser";
 
 export class MemoFileHandler {
 	private static readonly COMMENTS_DIR = ".comments";  // Still needed for temp files
 	private static readonly DEFAULT_MEMO_FILE = ".comments.local.txt";
+	private static readonly MARKDOWN_FILE = ".comments.local.md";
 	private memoFilePath: string;
+	private markdownFilePath: string;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
+	private markdownWatcher: vscode.FileSystemWatcher | undefined;
+	private isUpdatingFromMarkdown = false;
 
 	constructor(private workspaceFolder: vscode.WorkspaceFolder) {
 		// File is now in workspace root
 		this.memoFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.DEFAULT_MEMO_FILE);
+		this.markdownFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.MARKDOWN_FILE);
 	}
 
 	/**
@@ -27,6 +33,20 @@ export class MemoFileHandler {
 			MemoFileHandler.DEFAULT_MEMO_FILE,
 		);
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+		
+		// Set up markdown file watcher
+		const markdownPattern = new vscode.RelativePattern(
+			this.workspaceFolder,
+			MemoFileHandler.MARKDOWN_FILE,
+		);
+		this.markdownWatcher = vscode.workspace.createFileSystemWatcher(markdownPattern);
+		
+		// Handle markdown file changes
+		this.markdownWatcher.onDidChange(async () => {
+			if (!this.isUpdatingFromMarkdown) {
+				await this.syncFromMarkdown();
+			}
+		});
 	}
 
 	/**
@@ -199,9 +219,57 @@ export class MemoFileHandler {
 	}
 
 	/**
+	 * Sync changes from markdown file to comments file
+	 */
+	private async syncFromMarkdown(): Promise<void> {
+		try {
+			// Check if markdown file exists
+			try {
+				await fs.access(this.markdownFilePath);
+			} catch {
+				// Markdown file doesn't exist, nothing to sync
+				return;
+			}
+			
+			// Read both files
+			const markdownContent = await fs.readFile(this.markdownFilePath, "utf8");
+			const existingComments = await this.readComments();
+			
+			// Parse markdown
+			const markdownComments = parseMarkdownComments(markdownContent);
+			
+			// Apply changes (only updates existing comments)
+			const { updatedComments, hasChanges } = applyMarkdownChanges(existingComments, markdownComments);
+			
+			if (hasChanges) {
+				// Update comments file
+				this.isUpdatingFromMarkdown = true;
+				try {
+					for (const updatedComment of updatedComments) {
+						await this.updateComment(updatedComment, updatedComment.comment);
+					}
+					vscode.window.showInformationMessage(`Updated ${updatedComments.length} comment(s) from markdown`);
+				} finally {
+					this.isUpdatingFromMarkdown = false;
+				}
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to sync from markdown: ${error}`);
+		}
+	}
+	
+	/**
+	 * Get markdown file watcher
+	 */
+	getMarkdownWatcher(): vscode.FileSystemWatcher | undefined {
+		return this.markdownWatcher;
+	}
+
+	/**
 	 * Dispose resources
 	 */
 	dispose(): void {
 		this.fileWatcher?.dispose();
+		this.markdownWatcher?.dispose();
 	}
 }
