@@ -42,8 +42,8 @@ export function parseMarkdownComments(markdownContent: string): Map<string, stri
 			continue;
 		}
 		
-		// Match line header: ### [Line 10](src/file.ts#L10) or ### [Lines 10-20](src/file.ts#L10)
-		const lineMatch = line.match(/^###\s+\[Lines?\s+([\d\-]+)\]/);
+		// Match line header: ### L10 [code content](src/file.ts#L10) or ### L10-20 [code content](src/file.ts#L10)
+		const lineMatch = line.match(/^###\s+L([\d\-]+)\s+\[.*?\]\(.*?\)/);
 		if (lineMatch && currentFile) {
 			// Save previous comment if exists
 			if (currentLineSpec && commentLines.length > 0) {
@@ -175,8 +175,8 @@ export function parseMarkdownToComments(markdownContent: string): {
 			continue;
 		}
 		
-		// Match line header: ### [Line 10](src/file.ts#L10) or ### [Lines 10-20](src/file.ts#L10)
-		const lineMatch = line.match(/^###\s+\[Lines?\s+([\d\-]+)\]/);
+		// Match line header: ### L10 [code content](src/file.ts#L10) or ### L10-20 [code content](src/file.ts#L10)
+		const lineMatch = line.match(/^###\s+L([\d\-]+)\s+\[.*?\]\(.*?\)/);
 		if (lineMatch && currentFile) {
 			// Save previous comment if exists
 			if (currentLineSpec && commentLines.length > 0) {

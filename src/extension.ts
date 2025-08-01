@@ -98,7 +98,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	// Generate enhanced markdown with clickable links
-	const generateEnhancedMarkdown = (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): string => {
+	const generateEnhancedMarkdown = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
 		if (comments.length === 0) {
 			return "*No comments found*";
 		}
@@ -122,6 +122,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		const markdownSections: string[] = [];
 
 		for (const filePath of sortedFilePaths) {
+			// Try to read the file content
+			let fileLines: string[] = [];
+			try {
+				const fullPath = path.join(workspaceFolder.uri.fsPath, filePath);
+				const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(fullPath));
+				fileLines = Buffer.from(fileContent).toString('utf8').split('\n');
+			} catch (error) {
+				// File not found or unable to read, continue without code preview
+			}
 			// File path header with clickable link (using relative path)
 			markdownSections.push(`## [${filePath}](${filePath})`);
 			markdownSections.push("");
@@ -131,12 +140,31 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			// Each comment
 			for (const comment of fileComments) {
-				// Line number header with clickable link
-				const lineText = formatLineRange(comment);
+				// Create line range text
+				const lineSpec = comment.startLine === comment.endLine 
+					? `L${comment.startLine}`
+					: `L${comment.startLine}-${comment.endLine}`;
+
+				// Get code content for the first line
+				let codePreview = "";
+				if (fileLines.length > 0 && comment.startLine <= fileLines.length) {
+					// Get the line (1-based index)
+					const codeLine = fileLines[comment.startLine - 1];
+					// Remove leading whitespace
+					codePreview = codeLine.trimStart();
+				}
 
 				// Create clickable link to specific line (using relative path)
 				const lineLink = `${filePath}#L${comment.startLine}`;
-				markdownSections.push(`### [${lineText}](${lineLink})`);
+				
+				if (codePreview) {
+					// New format with code preview
+					markdownSections.push(`### ${lineSpec} [${codePreview}](${lineLink})`);
+				} else {
+					// Fallback format when code is not available
+					markdownSections.push(`### ${lineSpec} [→](${lineLink})`);
+				}
+				
 				markdownSections.push("");
 				markdownSections.push(comment.comment);
 				markdownSections.push("");
@@ -392,7 +420,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Generate enhanced markdown content
 		const now = new Date().toLocaleString();
 		const comments = await handler.readComments();
-		const enhancedMarkdown = generateEnhancedMarkdown(comments, workspaceFolder);
+		const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
 		
 		const markdownContent = `# Shadow Comments
 
