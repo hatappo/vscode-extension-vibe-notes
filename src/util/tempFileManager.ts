@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs/promises";
 
 export class TempFileManager {
-	private static readonly TEMP_DIR = ".comments/tmp";
+	private static readonly TEMP_DIR = ".notes/tmp";
 	private tempFileWatchers: Map<string, vscode.Disposable[]> = new Map();
 	private tempFileCallbacks: Map<string, (content: string | null) => Promise<void>> = new Map();
 

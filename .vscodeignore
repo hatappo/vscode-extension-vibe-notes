@@ -29,7 +29,8 @@ package-lock.json
 # Documentation and user files
 docs/**
 .claude/**
-.local.comments.txt
+.notes.local.txt
+.notes/
 
 # System and temporary files
 .DS_Store
