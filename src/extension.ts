@@ -23,6 +23,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Create a single tree provider for all workspaces
 	const treeProvider = new MultiWorkspaceTreeProvider();
+	
+	// Update UI components after comment changes
+	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
+		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+		if (decorationProvider) {
+			await decorationProvider.updateDecorations();
+		}
+
+		const codeLensProvider = codeLensProviders.get(workspaceFolder.uri.fsPath);
+		if (codeLensProvider) {
+			codeLensProvider.refresh();
+		}
+
+		await treeProvider.refresh();
+	};
 
 	// Initialize handlers for existing workspace folders
 	if (!vscode.workspace.workspaceFolders) {
@@ -72,6 +87,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			watcher.onDidCreate(handleFileChange);
 			watcher.onDidDelete(handleFileChange);
 		}
+		
+		// Listen for comments changed event from handler
+		handler.onCommentsChanged(async () => {
+			await updateUIComponents(folder);
+		});
 	}
 
 	// Register tree view after all workspaces are initialized
@@ -189,20 +209,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		return `Lines ${startLine}-${endLine}`;
 	};
 
-	// Update UI components after comment changes
-	const updateUIComponents = async (workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
-		const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-		if (decorationProvider) {
-			await decorationProvider.updateDecorations();
-		}
-
-		const codeLensProvider = codeLensProviders.get(workspaceFolder.uri.fsPath);
-		if (codeLensProvider) {
-			codeLensProvider.refresh();
-		}
-
-		await treeProvider.refresh();
-	};
 
 	// Find comment at current cursor position
 	const findCommentAtCursor = async (): Promise<{
@@ -542,8 +548,51 @@ ${enhancedMarkdown}`;
 
 	// Command: Refresh tree view
 	const refreshTreeCommand = vscode.commands.registerCommand("shadow-comments.refreshTree", async () => {
-		await treeProvider.refresh();
-		vscode.window.showInformationMessage("Comments refreshed");
+		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			const workspaceFolder = vscode.workspace.workspaceFolders[0];
+			const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
+			
+			try {
+				// Check if markdown file exists
+				await vscode.workspace.fs.stat(vscode.Uri.file(markdownPath));
+				
+				// If markdown exists, regenerate it (this will trigger TreeView refresh via watcher)
+				const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+				if (handler) {
+					const comments = await handler.readComments();
+					const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
+					const now = new Date().toLocaleString();
+					
+					const markdownContent = `# Shadow Comments
+
+> You can now fully edit this markdown file!
+> - Edit existing comment content
+> - Add new comments
+> - Delete comments  
+> - Change line numbers
+> Save the file (Ctrl+S / Cmd+S) to apply all changes.
+
+Generated: ${now}
+
+---
+
+${enhancedMarkdown}`;
+					
+					await vscode.workspace.fs.writeFile(
+						vscode.Uri.file(markdownPath), 
+						Buffer.from(markdownContent, 'utf8')
+					);
+				}
+			} catch {
+				// Markdown file doesn't exist, refresh TreeView directly
+				await treeProvider.refresh();
+			}
+		} else {
+			// No workspace, just refresh TreeView
+			await treeProvider.refresh();
+		}
+		
+		vscode.window.showInformationMessage("View refreshed");
 	});
 
 	// Command: Save to Git Notes

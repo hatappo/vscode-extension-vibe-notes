@@ -13,6 +13,8 @@ export class MemoFileHandler {
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
 	private markdownWatcher: vscode.FileSystemWatcher | undefined;
 	private isUpdatingFromMarkdown = false;
+	private _onCommentsChanged = new vscode.EventEmitter<void>();
+	public readonly onCommentsChanged = this._onCommentsChanged.event;
 
 	constructor(private workspaceFolder: vscode.WorkspaceFolder) {
 		// File is now in workspace root
@@ -275,6 +277,9 @@ export class MemoFileHandler {
 				vscode.window.showInformationMessage(
 					`Updated comments from markdown: ${comments.length} comment(s)`
 				);
+				
+				// Emit event to update UI
+				this._onCommentsChanged.fire();
 			} finally {
 				this.isUpdatingFromMarkdown = false;
 			}
@@ -297,5 +302,6 @@ export class MemoFileHandler {
 	dispose(): void {
 		this.fileWatcher?.dispose();
 		this.markdownWatcher?.dispose();
+		this._onCommentsChanged.dispose();
 	}
 }

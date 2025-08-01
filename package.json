@@ -50,12 +50,12 @@
 			},
 			{
 				"command": "shadow-comments.showMarkdown",
-				"title": "Shadow Comments: Open/Refresh Comments as Markdown",
-				"icon": "$(go-to-file)"
+				"title": "Shadow Comments: Open/Refresh Markdown",
+				"icon": "$(markdown)"
 			},
 			{
 				"command": "shadow-comments.refreshTree",
-				"title": "Shadow Comments: Refresh Comments",
+				"title": "Shadow Comments: Refresh View",
 				"icon": "$(refresh)"
 			},
 			{
