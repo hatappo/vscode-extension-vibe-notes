@@ -6,6 +6,28 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.0] - 2025-08-01
+
+### Added
+- Inline comment display with 💬 emoji at line end
+- Multi-line comment indicator with ".." suffix
+- Hover support for full comment text on inline display
+
+### Changed
+- Migrated storage from `.local.comments.txt` to `.comments/comments.local.txt`
+- Automatic migration for existing users
+- Replaced copy commands with show commands (open in editor with auto-select)
+- Changed "Sync to Git Notes" to "Save to Git Notes" with 💾 icon
+- All commands now have "Shadow Comments:" prefix for better discoverability
+- Tree view title simplified (removed duplicate "Comments")
+
+### Removed
+- Show button in CodeLens (after implementation review)
+- Debug console.log statements
+
+### Fixed
+- Code duplication in edit/delete commands (refactored with common functions)
+
 ## [0.0.3] - 2025-07-31
 
 ### Changed

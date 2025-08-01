@@ -4,21 +4,84 @@ import { promises as fs } from 'fs';
 import { parseReviewFileWithErrors, ReviewComment, convertToMarkdown } from './reviewCommentParser';
 
 export class MemoFileHandler {
-  private static readonly DEFAULT_MEMO_FILE = '.local.comments.txt';
+  private static readonly COMMENTS_DIR = '.comments';
+  private static readonly DEFAULT_MEMO_FILE = 'comments.local.txt';
+  private static readonly LEGACY_MEMO_FILE = '.local.comments.txt';
   private memoFilePath: string;
+  private legacyFilePath: string;
   private fileWatcher: vscode.FileSystemWatcher | undefined;
   
   constructor(private workspaceFolder: vscode.WorkspaceFolder) {
-    this.memoFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.DEFAULT_MEMO_FILE);
+    const commentsDir = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR);
+    this.memoFilePath = path.join(commentsDir, MemoFileHandler.DEFAULT_MEMO_FILE);
+    this.legacyFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.LEGACY_MEMO_FILE);
   }
   
   /**
    * Initialize the memo file handler and set up file watching
    */
   async initialize(): Promise<void> {
+    // Migrate from legacy file if needed
+    await this.migrateFromLegacyFile();
+    
+    // Ensure comments directory exists
+    await this.ensureCommentsDirectory();
+    
     // Set up file watcher (even if file doesn't exist yet)
-    const pattern = new vscode.RelativePattern(this.workspaceFolder, MemoFileHandler.DEFAULT_MEMO_FILE);
+    const pattern = new vscode.RelativePattern(this.workspaceFolder, `${MemoFileHandler.COMMENTS_DIR}/${MemoFileHandler.DEFAULT_MEMO_FILE}`);
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+  }
+  
+  /**
+   * Ensure comments directory exists
+   */
+  private async ensureCommentsDirectory(): Promise<void> {
+    const commentsDir = path.join(this.workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR);
+    try {
+      await fs.mkdir(commentsDir, { recursive: true });
+    } catch (error) {
+      // Directory might already exist, which is fine
+    }
+  }
+  
+  /**
+   * Migrate from legacy file location
+   */
+  private async migrateFromLegacyFile(): Promise<void> {
+    try {
+      // Check if legacy file exists
+      try {
+        await fs.access(this.legacyFilePath);
+      } catch {
+        // Legacy file doesn't exist, nothing to migrate
+        return;
+      }
+      
+      // Check if new file already exists
+      try {
+        await fs.access(this.memoFilePath);
+        // New file already exists, don't migrate
+        return;
+      } catch {
+        // New file doesn't exist, proceed with migration
+      }
+      
+      // Ensure comments directory exists
+      await this.ensureCommentsDirectory();
+      
+      // Read legacy file content
+      const content = await fs.readFile(this.legacyFilePath, 'utf8');
+      
+      // Write to new location
+      await fs.writeFile(this.memoFilePath, content, 'utf8');
+      
+      // Delete legacy file
+      await fs.unlink(this.legacyFilePath);
+      
+      vscode.window.showInformationMessage('Comments file migrated to new location: .comments/comments.local.txt');
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to migrate comments file: ${error}`);
+    }
   }
   
   /**
@@ -49,7 +112,7 @@ export class MemoFileHandler {
   /**
    * Read all comments from the memo file
    */
-  async readComments(): Promise<ReviewComment[]> {
+  public async readComments(): Promise<ReviewComment[]> {
     try {
       // Check if file exists first
       try {
@@ -81,6 +144,9 @@ export class MemoFileHandler {
    */
   async addComment(filePath: string, startLine: number, endLine: number, comment: string, startColumn?: number, endColumn?: number): Promise<void> {
     try {
+      // Ensure comments directory exists
+      await this.ensureCommentsDirectory();
+      
       // Read existing content, or use empty string if file doesn't exist
       let content = '';
       try {
@@ -177,51 +243,11 @@ export class MemoFileHandler {
   }
   
   /**
-   * Copy raw content to clipboard
-   */
-  async copyRawContent(): Promise<void> {
-    try {
-      const content = await this.getRawContent();
-      await vscode.env.clipboard.writeText(content);
-      vscode.window.showInformationMessage('Raw content copied to clipboard');
-    } catch (error) {
-      vscode.window.showErrorMessage(`Failed to copy content: ${error}`);
-    }
-  }
-  
-  /**
    * Get content as markdown
    */
   async getMarkdownContent(): Promise<string> {
     const comments = await this.readComments();
     return convertToMarkdown(comments);
-  }
-  
-  /**
-   * Copy content as markdown to clipboard
-   */
-  async copyAsMarkdown(): Promise<void> {
-    try {
-      const markdown = await this.getMarkdownContent();
-      await vscode.env.clipboard.writeText(markdown);
-      vscode.window.showInformationMessage('Markdown content copied to clipboard');
-    } catch (error) {
-      vscode.window.showErrorMessage(`Failed to copy markdown: ${error}`);
-    }
-  }
-  
-  /**
-   * Copy content as JSON to clipboard
-   */
-  async copyAsJson(): Promise<void> {
-    try {
-      const comments = await this.readComments();
-      const json = JSON.stringify(comments, null, 2);
-      await vscode.env.clipboard.writeText(json);
-      vscode.window.showInformationMessage('JSON content copied to clipboard');
-    } catch (error) {
-      vscode.window.showErrorMessage(`Failed to copy JSON: ${error}`);
-    }
   }
   
   /**

@@ -34,53 +34,48 @@
     "commands": [
       {
         "command": "shadow-comments.addComment",
-        "title": "Add Comment to Line"
-      },
-      {
-        "command": "shadow-comments.copyRaw",
-        "title": "Copy Comments as Raw",
-        "icon": "$(files)"
-      },
-      {
-        "command": "shadow-comments.copyMarkdown",
-        "title": "Copy Comments as Markdown",
-        "icon": "$(markdown)"
-      },
-      {
-        "command": "shadow-comments.copyJson",
-        "title": "Copy Comments as JSON",
-        "icon": "$(json)"
+        "title": "Shadow Comments: Add Comment to Line"
       },
       {
         "command": "shadow-comments.editCommentAtCursor",
-        "title": "Edit Comment"
+        "title": "Shadow Comments: Edit Comment"
       },
       {
         "command": "shadow-comments.deleteCommentAtCursor",
-        "title": "Delete Comment"
+        "title": "Shadow Comments: Delete Comment"
       },
       {
         "command": "shadow-comments.editCommentAtLine",
-        "title": "Edit Comment at Line"
+        "title": "Shadow Comments: Edit Comment at Line"
       },
       {
         "command": "shadow-comments.deleteCommentAtLine",
-        "title": "Delete Comment at Line"
+        "title": "Shadow Comments: Delete Comment at Line"
       },
       {
-        "command": "shadow-comments.refreshTree",
-        "title": "Refresh Comments",
-        "icon": "$(refresh)"
+        "command": "shadow-comments.showMarkdown",
+        "title": "Shadow Comments: Show Comments as Markdown",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "shadow-comments.showJson",
+        "title": "Shadow Comments: Show Comments as JSON",
+        "icon": "$(json)"
       },
       {
         "command": "shadow-comments.openCommentsFile",
-        "title": "Open Comments File",
+        "title": "Shadow Comments: Open Comments File",
         "icon": "$(file-text)"
       },
       {
-        "command": "shadow-comments.syncToGitNotes",
-        "title": "Sync to Git Notes",
-        "icon": "$(cloud-upload)"
+        "command": "shadow-comments.refreshTree",
+        "title": "Shadow Comments: Refresh Comments",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "shadow-comments.saveToGitNotes",
+        "title": "Shadow Comments: Save to Git Notes",
+        "icon": "$(save)"
       }
     ],
     "menus": {
@@ -113,24 +108,19 @@
           "group": "navigation@1"
         },
         {
-          "command": "shadow-comments.syncToGitNotes",
+          "command": "shadow-comments.showMarkdown",
           "when": "view == shadowCommentsView",
           "group": "navigation@2"
         },
         {
-          "command": "shadow-comments.copyRaw",
+          "command": "shadow-comments.showJson",
           "when": "view == shadowCommentsView",
           "group": "navigation@3"
         },
         {
-          "command": "shadow-comments.copyMarkdown",
+          "command": "shadow-comments.saveToGitNotes",
           "when": "view == shadowCommentsView",
           "group": "navigation@4"
-        },
-        {
-          "command": "shadow-comments.copyJson",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@5"
         }
       ]
     },
@@ -147,7 +137,7 @@
       "shadow-comments": [
         {
           "id": "shadowCommentsView",
-          "name": "Comments",
+          "name": "",
           "icon": "$(comment)",
           "contextualTitle": "Shadow Comments"
         }

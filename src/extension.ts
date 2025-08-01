@@ -12,8 +12,6 @@ import { CommentCodeLensProvider } from './providers/commentCodeLensProvider';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	console.log('[Shadow Comments] Extension activation started!');
-	console.log('[Shadow Comments] Context:', context.extensionPath);
 
 	// Initialize memo file handlers and decoration providers for each workspace
 	const memoHandlers = new Map<string, MemoFileHandler>();
@@ -55,7 +53,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			const watcher = handler.getFileWatcher();
 			if (watcher) {
 				const handleFileChange = async () => {
-					console.log('[Shadow Comments] File changed, updating UI...');
 					await decorationProvider.updateDecorations();
 					await treeProvider.refresh();
 					codeLensProvider.refresh();
@@ -154,10 +151,61 @@ export async function activate(context: vscode.ExtensionContext) {
 		return { comment, handler, workspaceFolder };
 	};
 
+	// Common function to edit a comment
+	const editComment = async (comment: ReviewComment, handler: MemoFileHandler, workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
+		// Prompt for new comment text
+		const newComment = await vscode.window.showInputBox({
+			prompt: 'Edit comment',
+			value: comment.comment,
+			placeHolder: 'Enter your comment...'
+		});
+
+		if (newComment !== undefined && newComment !== comment.comment) {
+			await handler.updateComment(comment, newComment);
+			await updateUIComponents(workspaceFolder);
+		}
+	};
+
+	// Common function to delete a comment
+	const deleteComment = async (comment: ReviewComment, handler: MemoFileHandler, workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
+		// Confirm deletion
+		const confirmation = await vscode.window.showWarningMessage(
+			'Delete this comment?',
+			'Delete',
+			'Cancel'
+		);
+
+		if (confirmation === 'Delete') {
+			await handler.deleteComment(comment);
+			await updateUIComponents(workspaceFolder);
+		}
+	};
+
+	// Common function to find comment at specific line
+	const findCommentAtLine = async (uri: vscode.Uri, line: number): Promise<{ comment: ReviewComment | undefined, handler: MemoFileHandler | undefined, workspaceFolder: vscode.WorkspaceFolder | undefined }> => {
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+		if (!workspaceFolder) {
+			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+		}
+
+		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
+		if (!handler) {
+			return { comment: undefined, handler: undefined, workspaceFolder: undefined };
+		}
+
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
+		const comments = await handler.readComments();
+		const comment = comments.find(c => 
+			c.filePath === relativePath && 
+			line >= c.startLine && 
+			line <= c.endLine
+		);
+
+		return { comment, handler, workspaceFolder };
+	};
+
 	// Command: Add comment to line
-	console.log('[Shadow Comments] Registering addComment command...');
 	const addCommentCommand = vscode.commands.registerCommand('shadow-comments.addComment', async () => {
-		console.log('[Shadow Comments] addComment command triggered!');
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
 			vscode.window.showErrorMessage('No active editor');
@@ -190,35 +238,47 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// Command: Copy as raw
-	const copyRawCommand = vscode.commands.registerCommand('shadow-comments.copyRaw', async () => {
+	// Command: Show as markdown
+	const showMarkdownCommand = vscode.commands.registerCommand('shadow-comments.showMarkdown', async () => {
 		const handler = getHandlerForCopy();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
 			return;
 		}
-		await handler.copyRawContent();
+		const markdown = await handler.getMarkdownContent();
+		const doc = await vscode.workspace.openTextDocument({
+			content: markdown,
+			language: 'markdown'
+		});
+		const editor = await vscode.window.showTextDocument(doc);
+		// Select all content
+		const firstLine = doc.lineAt(0);
+		const lastLine = doc.lineAt(doc.lineCount - 1);
+		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
+		editor.selection = new vscode.Selection(range.start, range.end);
 	});
 
-	// Command: Copy as markdown
-	const copyMarkdownCommand = vscode.commands.registerCommand('shadow-comments.copyMarkdown', async () => {
+	// Command: Show as JSON
+	const showJsonCommand = vscode.commands.registerCommand('shadow-comments.showJson', async () => {
 		const handler = getHandlerForCopy();
 		if (!handler) {
 			vscode.window.showErrorMessage('No workspace folder found');
 			return;
 		}
-		await handler.copyAsMarkdown();
+		const comments = await handler.readComments();
+		const json = JSON.stringify(comments, null, 2);
+		const doc = await vscode.workspace.openTextDocument({
+			content: json,
+			language: 'json'
+		});
+		const editor = await vscode.window.showTextDocument(doc);
+		// Select all content
+		const firstLine = doc.lineAt(0);
+		const lastLine = doc.lineAt(doc.lineCount - 1);
+		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
+		editor.selection = new vscode.Selection(range.start, range.end);
 	});
 
-	// Command: Copy as JSON
-	const copyJsonCommand = vscode.commands.registerCommand('shadow-comments.copyJson', async () => {
-		const handler = getHandlerForCopy();
-		if (!handler) {
-			vscode.window.showErrorMessage('No workspace folder found');
-			return;
-		}
-		await handler.copyAsJson();
-	});
 
 	// Command: Go to comment
 	const goToCommentCommand = vscode.commands.registerCommand('shadow-comments.goToComment', async (comment: any, workspaceFolder?: vscode.WorkspaceFolder) => {
@@ -254,17 +314,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		// Prompt for new comment text
-		const newComment = await vscode.window.showInputBox({
-			prompt: 'Edit comment',
-			value: comment.comment,
-			placeHolder: 'Enter your comment...'
-		});
-
-		if (newComment !== undefined && newComment !== comment.comment) {
-			await handler.updateComment(comment, newComment);
-			await updateUIComponents(workspaceFolder);
-		}
+		await editComment(comment, handler, workspaceFolder);
 	});
 
 	// Command: Delete comment at current position
@@ -278,90 +328,22 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		// Confirm deletion
-		const confirmation = await vscode.window.showWarningMessage(
-			'Delete this comment?',
-			'Delete',
-			'Cancel'
-		);
-
-		if (confirmation === 'Delete') {
-			await handler.deleteComment(comment);
-			await updateUIComponents(workspaceFolder);
-		}
+		await deleteComment(comment, handler, workspaceFolder);
 	});
 
 	// Command: Edit comment at specific line (for CodeLens)
 	const editCommentAtLineCommand = vscode.commands.registerCommand('shadow-comments.editCommentAtLine', async (uri: vscode.Uri, line: number) => {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-		if (!workspaceFolder) {
-			return;
-		}
-
-		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
-		if (!handler) {
-			return;
-		}
-
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
-		const comments = await handler.readComments();
-		const comment = comments.find(c => 
-			c.filePath === relativePath && 
-			line >= c.startLine && 
-			line <= c.endLine
-		);
-
-		if (!comment) {
-			return;
-		}
-
-		// Prompt for new comment text
-		const newComment = await vscode.window.showInputBox({
-			prompt: 'Edit comment',
-			value: comment.comment,
-			placeHolder: 'Enter your comment...'
-		});
-
-		if (newComment !== undefined && newComment !== comment.comment) {
-			await handler.updateComment(comment, newComment);
-			await updateUIComponents(workspaceFolder);
+		const { comment, handler, workspaceFolder } = await findCommentAtLine(uri, line);
+		if (comment && handler && workspaceFolder) {
+			await editComment(comment, handler, workspaceFolder);
 		}
 	});
 
 	// Command: Delete comment at specific line (for CodeLens)
 	const deleteCommentAtLineCommand = vscode.commands.registerCommand('shadow-comments.deleteCommentAtLine', async (uri: vscode.Uri, line: number) => {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-		if (!workspaceFolder) {
-			return;
-		}
-
-		const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
-		if (!handler) {
-			return;
-		}
-
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
-		const comments = await handler.readComments();
-		const comment = comments.find(c => 
-			c.filePath === relativePath && 
-			line >= c.startLine && 
-			line <= c.endLine
-		);
-
-		if (!comment) {
-			return;
-		}
-
-		// Confirm deletion
-		const confirmation = await vscode.window.showWarningMessage(
-			'Delete this comment?',
-			'Delete',
-			'Cancel'
-		);
-
-		if (confirmation === 'Delete') {
-			await handler.deleteComment(comment);
-			await updateUIComponents(workspaceFolder);
+		const { comment, handler, workspaceFolder } = await findCommentAtLine(uri, line);
+		if (comment && handler && workspaceFolder) {
+			await deleteComment(comment, handler, workspaceFolder);
 		}
 	});
 
@@ -380,21 +362,29 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		// Construct the path to .local.comments.txt
-		const commentsFilePath = path.join(workspaceFolder.uri.fsPath, '.local.comments.txt');
+		// Construct the path to comments file
+		const commentsDir = path.join(workspaceFolder.uri.fsPath, '.comments');
+		const commentsFilePath = path.join(commentsDir, 'comments.local.txt');
 		const fileUri = vscode.Uri.file(commentsFilePath);
 
 		try {
 			// Open the file in the editor
 			const document = await vscode.workspace.openTextDocument(fileUri);
-			await vscode.window.showTextDocument(document);
+			const editor = await vscode.window.showTextDocument(document);
+			// Select all content
+			if (document.lineCount > 0) {
+				const firstLine = document.lineAt(0);
+				const lastLine = document.lineAt(document.lineCount - 1);
+				const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
+				editor.selection = new vscode.Selection(range.start, range.end);
+			}
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to open comments file: ${error}`);
 		}
 	});
 
-	// Command: Sync to Git Notes
-	const syncToGitNotesCommand = vscode.commands.registerCommand('shadow-comments.syncToGitNotes', async () => {
+	// Command: Save to Git Notes
+	const saveToGitNotesCommand = vscode.commands.registerCommand('shadow-comments.saveToGitNotes', async () => {
 		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage('No workspace folder found');
@@ -421,18 +411,18 @@ export async function activate(context: vscode.ExtensionContext) {
 			// Read the current comments
 			const comments = await handler.readComments();
 			if (comments.length === 0) {
-				vscode.window.showInformationMessage('No comments to sync');
+				vscode.window.showInformationMessage('No comments to save');
 				return;
 			}
 
 			// Show confirmation dialog
 			const confirmation = await vscode.window.showWarningMessage(
-				'Sync comments to Git Notes? This will overwrite any existing notes on the current HEAD commit.',
-				'Sync',
+				'Save comments to Git Notes? This will overwrite any existing notes on the current HEAD commit.',
+				'Save',
 				'Cancel'
 			);
 
-			if (confirmation !== 'Sync') {
+			if (confirmation !== 'Save') {
 				return;
 			}
 
@@ -471,19 +461,17 @@ export async function activate(context: vscode.ExtensionContext) {
 				gitProcess.stdin.end();
 			});
 
-			vscode.window.showInformationMessage('Comments synced to git notes');
+			vscode.window.showInformationMessage('Comments saved to git notes');
 		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to sync to git notes: ${error}`);
+			vscode.window.showErrorMessage(`Failed to save to git notes: ${error}`);
 		}
 	});
 
 	// Register all commands
-	console.log('[Shadow Comments] Registering all commands to context.subscriptions...');
 	context.subscriptions.push(
 		addCommentCommand,
-		copyRawCommand,
-		copyMarkdownCommand,
-		copyJsonCommand,
+		showMarkdownCommand,
+		showJsonCommand,
 		goToCommentCommand,
 		editCommentAtCursorCommand,
 		deleteCommentAtCursorCommand,
@@ -491,10 +479,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		deleteCommentAtLineCommand,
 		refreshTreeCommand,
 		openCommentsFileCommand,
-		syncToGitNotesCommand
+		saveToGitNotesCommand
 	);
-	console.log('[Shadow Comments] Extension activation completed!');
-	
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(
 		vscode.window.onDidChangeVisibleTextEditors(() => {
