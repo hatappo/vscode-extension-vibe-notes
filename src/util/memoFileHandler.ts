@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
-import { parseReviewFileWithErrors, ReviewComment, convertToMarkdown } from "./reviewCommentParser";
+import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser";
 
 export class MemoFileHandler {
 	private static readonly COMMENTS_DIR = ".comments";  // Still needed for temp files
@@ -204,14 +204,6 @@ export class MemoFileHandler {
 			// File doesn't exist yet
 			return "";
 		}
-	}
-
-	/**
-	 * Get content as markdown
-	 */
-	async getMarkdownContent(): Promise<string> {
-		const comments = await this.readComments();
-		return convertToMarkdown(comments);
 	}
 
 	/**

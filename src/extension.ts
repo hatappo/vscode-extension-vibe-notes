@@ -132,16 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			// Each comment
 			for (const comment of fileComments) {
 				// Line number header with clickable link
-				let lineText: string;
-				if (comment.startLine === comment.endLine) {
-					lineText = comment.startColumn !== undefined 
-						? `Line ${comment.startLine}:${comment.startColumn}`
-						: `Line ${comment.startLine}`;
-				} else {
-					lineText = comment.startColumn !== undefined && comment.endColumn !== undefined
-						? `Lines ${comment.startLine}:${comment.startColumn}-${comment.endLine}:${comment.endColumn}`
-						: `Lines ${comment.startLine}-${comment.endLine}`;
-				}
+				const lineText = formatLineRange(comment);
 
 				// Create clickable link to specific line (using relative path)
 				const lineLink = `${filePath}#L${comment.startLine}`;
@@ -160,21 +151,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		return markdownSections.join("\n");
 	};
 
-	// Get handler for copy operations (fallback to first workspace if no active editor)
-	const getHandlerForCopy = (): MemoFileHandler | undefined => {
-		// First try to get handler based on active editor
-		const handler = getCurrentHandler();
-		if (handler) {
-			return handler;
+	// Format line range for display
+	const formatLineRange = (comment: ReviewComment): string => {
+		const { startLine, endLine, startColumn, endColumn } = comment;
+		if (startLine === endLine) {
+			return startColumn !== undefined ? `Line ${startLine}:${startColumn}` : `Line ${startLine}`;
 		}
-
-		// If no active editor, use first workspace
-		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-			const firstWorkspace = vscode.workspace.workspaceFolders[0];
-			return memoHandlers.get(firstWorkspace.uri.fsPath);
-		}
-
-		return undefined;
+		return startColumn !== undefined && endColumn !== undefined
+			? `Lines ${startLine}:${startColumn}-${endLine}:${endColumn}`
+			: `Lines ${startLine}-${endLine}`;
 	};
 
 	// Update UI components after comment changes
@@ -442,27 +427,6 @@ ${enhancedMarkdown}`;
 		}
 	});
 
-	// Command: Show as JSON
-	const showJsonCommand = vscode.commands.registerCommand("shadow-comments.showJson", async () => {
-		const handler = getHandlerForCopy();
-		if (!handler) {
-			vscode.window.showErrorMessage("No workspace folder found");
-			return;
-		}
-		const comments = await handler.readComments();
-		const json = JSON.stringify(comments, null, 2);
-		const doc = await vscode.workspace.openTextDocument({
-			content: json,
-			language: "json",
-		});
-		const editor = await vscode.window.showTextDocument(doc);
-		// Select all content
-		const firstLine = doc.lineAt(0);
-		const lastLine = doc.lineAt(doc.lineCount - 1);
-		const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-		editor.selection = new vscode.Selection(range.start, range.end);
-	});
-
 	// Command: Go to comment
 	const goToCommentCommand = vscode.commands.registerCommand(
 		"shadow-comments.goToComment",
@@ -549,36 +513,6 @@ ${enhancedMarkdown}`;
 	const refreshTreeCommand = vscode.commands.registerCommand("shadow-comments.refreshTree", async () => {
 		await treeProvider.refresh();
 		vscode.window.showInformationMessage("Comments refreshed");
-	});
-
-	// Command: Open comments file
-	const openCommentsFileCommand = vscode.commands.registerCommand("shadow-comments.openCommentsFile", async () => {
-		// Get the first workspace folder
-		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-		if (!workspaceFolder) {
-			vscode.window.showErrorMessage("No workspace folder found");
-			return;
-		}
-
-		// Construct the path to comments file
-		const commentsDir = path.join(workspaceFolder.uri.fsPath, ".comments");
-		const commentsFilePath = path.join(commentsDir, "comments.local.txt");
-		const fileUri = vscode.Uri.file(commentsFilePath);
-
-		try {
-			// Open the file in the editor
-			const document = await vscode.workspace.openTextDocument(fileUri);
-			const editor = await vscode.window.showTextDocument(document);
-			// Select all content
-			if (document.lineCount > 0) {
-				const firstLine = document.lineAt(0);
-				const lastLine = document.lineAt(document.lineCount - 1);
-				const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
-				editor.selection = new vscode.Selection(range.start, range.end);
-			}
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to open comments file: ${error}`);
-		}
 	});
 
 	// Command: Save to Git Notes
@@ -669,14 +603,12 @@ ${enhancedMarkdown}`;
 	context.subscriptions.push(
 		addCommentCommand,
 		showMarkdownCommand,
-		showJsonCommand,
 		goToCommentCommand,
 		editCommentAtCursorCommand,
 		deleteCommentAtCursorCommand,
 		editCommentAtLineCommand,
 		deleteCommentAtLineCommand,
 		refreshTreeCommand,
-		openCommentsFileCommand,
 		saveToGitNotesCommand,
 	);
 	// Update decorations when editor becomes visible

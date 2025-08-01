@@ -34,8 +34,7 @@ src/file.ts#L20-25 "このロジックは見直しが必要"
 
 コマンドパレット（Cmd/Ctrl+Shift+P）からアクセス：
 - `Shadow Comments: Add Comment to Line`
-- `Shadow Comments: Show Comments as Markdown`
-- `Shadow Comments: Show Comments as JSON`
+- `Shadow Comments: Open Comments as Markdown`
 - `Shadow Comments: Save to Git Notes`
 
 ## 使い方のコツ
