@@ -85,9 +85,11 @@ export class TempFileManager {
 			disposables.push(closeListener);
 
 			// Also listen for editor visibility changes
-			const visibilityListener = vscode.window.onDidChangeVisibleTextEditors(async (editors) => {
-				// Check if our temp file is still visible in any editor
-				const isTempFileVisible = editors.some((editor) => editor.document.uri.fsPath === tempFilePath);
+			const visibilityListener = vscode.window.onDidChangeVisibleTextEditors(async () => {
+				// Check current visible editors directly instead of relying on event args
+				const isTempFileVisible = vscode.window.visibleTextEditors.some(
+					(editor) => editor.document.uri.fsPath === tempFilePath
+				);
 
 				if (!isTempFileVisible && this.tempFileCallbacks.has(tempFilePath)) {
 					// Temp file is no longer visible, check if it still exists
