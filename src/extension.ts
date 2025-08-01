@@ -77,15 +77,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Set up file watcher
 		const watcher = handler.getFileWatcher();
 		if (watcher) {
-			const handleFileChange = async () => {
-				await decorationProvider.updateDecorations();
-				await treeProvider.refresh();
-				codeLensProvider.refresh();
-			};
-
-			watcher.onDidChange(handleFileChange);
-			watcher.onDidCreate(handleFileChange);
-			watcher.onDidDelete(handleFileChange);
+			watcher.onDidChange(() => updateUIComponents(folder));
+			watcher.onDidCreate(() => updateUIComponents(folder));
+			watcher.onDidDelete(() => updateUIComponents(folder));
 		}
 		
 		// Listen for comments changed event from handler
@@ -117,6 +111,27 @@ export async function activate(context: vscode.ExtensionContext) {
 		return memoHandlers.get(workspaceFolder.uri.fsPath);
 	};
 
+	// Generate markdown file content
+	const generateMarkdownFileContent = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+		const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
+		const now = new Date().toLocaleString();
+		
+		return `# Shadow Comments
+
+> You can now fully edit this markdown file!
+> - Edit existing comment content
+> - Add new comments
+> - Delete comments  
+> - Change line numbers
+> Save the file (Ctrl+S / Cmd+S) to apply all changes.
+
+Generated: ${now}
+
+---
+
+${enhancedMarkdown}`;
+	};
+	
 	// Generate enhanced markdown with clickable links
 	const generateEnhancedMarkdown = async (comments: ReviewComment[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
 		if (comments.length === 0) {
@@ -200,14 +215,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		return markdownSections.join("\n");
 	};
 
-	// Format line range for display
-	const formatLineRange = (comment: ReviewComment): string => {
-		const { startLine, endLine } = comment;
-		if (startLine === endLine) {
-			return `Line ${startLine}`;
-		}
-		return `Lines ${startLine}-${endLine}`;
-	};
 
 
 	// Find comment at current cursor position
@@ -425,24 +432,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		// Generate enhanced markdown content
-		const now = new Date().toLocaleString();
 		const comments = await handler.readComments();
-		const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
-		
-		const markdownContent = `# Shadow Comments
-
-> You can now fully edit this markdown file!
-> - Edit existing comment content
-> - Add new comments
-> - Delete comments  
-> - Change line numbers
-> Save the file (Ctrl+S / Cmd+S) to apply all changes.
-
-Generated: ${now}
-
----
-
-${enhancedMarkdown}`;
+		const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
 
 		// Write to .comments.local.md in workspace root
 		const markdownPath = path.join(workspaceFolder.uri.fsPath, '.comments.local.md');
@@ -560,23 +551,7 @@ ${enhancedMarkdown}`;
 				const handler = memoHandlers.get(workspaceFolder.uri.fsPath);
 				if (handler) {
 					const comments = await handler.readComments();
-					const enhancedMarkdown = await generateEnhancedMarkdown(comments, workspaceFolder);
-					const now = new Date().toLocaleString();
-					
-					const markdownContent = `# Shadow Comments
-
-> You can now fully edit this markdown file!
-> - Edit existing comment content
-> - Add new comments
-> - Delete comments  
-> - Change line numbers
-> Save the file (Ctrl+S / Cmd+S) to apply all changes.
-
-Generated: ${now}
-
----
-
-${enhancedMarkdown}`;
+					const markdownContent = await generateMarkdownFileContent(comments, workspaceFolder);
 					
 					await vscode.workspace.fs.writeFile(
 						vscode.Uri.file(markdownPath), 
