@@ -6,6 +6,7 @@ export class TempFileManager {
 	private static readonly TEMP_DIR = ".notes/tmp";
 	private tempFileWatchers: Map<string, vscode.Disposable[]> = new Map();
 	private tempFileCallbacks: Map<string, (content: string | null) => Promise<void>> = new Map();
+	private tempFileOpenTimes: Map<string, number> = new Map();
 
 	constructor(private workspaceRoot: string) {}
 
@@ -36,6 +37,7 @@ export class TempFileManager {
 
 			// Store callback for this file
 			this.tempFileCallbacks.set(tempFilePath, callback);
+			this.tempFileOpenTimes.set(tempFilePath, Date.now());
 
 			// Set up listeners for this file
 			const disposables: vscode.Disposable[] = [];
@@ -68,6 +70,12 @@ export class TempFileManager {
 			// Listen for close events
 			const closeListener = vscode.workspace.onDidCloseTextDocument(async (closedDoc) => {
 				if (closedDoc.uri.fsPath === tempFilePath) {
+					// Check if this is a premature close (within 1 second of opening)
+					const openTime = this.tempFileOpenTimes.get(tempFilePath);
+					if (openTime && Date.now() - openTime < 1000) {
+						return;
+					}
+					
 					// Check if file still exists (wasn't saved and cleaned up)
 					try {
 						await fs.access(tempFilePath);
@@ -126,8 +134,9 @@ export class TempFileManager {
 			this.tempFileWatchers.delete(tempFilePath);
 		}
 
-		// Remove callback
+		// Remove callback and open time
 		this.tempFileCallbacks.delete(tempFilePath);
+		this.tempFileOpenTimes.delete(tempFilePath);
 
 		// Delete the file
 		try {
