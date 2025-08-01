@@ -1,0 +1,13 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"linter": {
+		"enabled": false
+	},
+	"formatter": {
+		"enabled": true,
+		"lineWidth": 120
+	},
+	"files": {
+		"ignore": ["node_modules/**", "dist/**", "out/**", ".vscode-test/**", "*.min.js"]
+	}
+}

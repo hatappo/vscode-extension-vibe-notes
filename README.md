@@ -4,144 +4,51 @@ Keep private code comments that live in the shadows - never touching your source
 
 ## Features
 
-- **Add Comments to Lines**: Right-click on any line or selection to add a comment
-- **Visual Indicators**: See comment indicators in the editor gutter with a blue "C" icon
-- **Inline Actions**: Edit or delete comments directly with CodeLens buttons above commented lines
-- **Comments Tree View**: Browse all comments in a dedicated side panel organized by file
-- **Multiple Export Formats**: Copy comments as raw text, markdown, or JSON
-- **Auto-sync**: Comments are automatically saved to `.local.comments.txt`
-- **Hover Support**: Hover over comment indicators to see the comment content
-- **Click to Navigate**: Click on comments in the tree view to jump to their location
+- Add comments to any line **without making any changes to the source file**.
+- Comments appear at the end of the line
+- **Visual indicators** at the next to line numbers in editor (editor gutter).
+- Edit/Delete comments via **CodeLens buttons** or right-click menu
+- **Tree view** to browse all comments
+- Show as **Markdown**
+- Copy comments to **`git notes`**.
 
-## Usage
+## Quick Start
 
-### Adding Comments
+1. **Add a comment**: Right-click on any line → "Add Shadow Comment to Line" (opens a temporary editor)
+2. **Edit/Delete**: Use the CodeLens buttons above commented lines
+3. **View all comments**: Open the Shadow Comments panel in the Activity Bar
 
-1. Select a line or range of lines in your code
-2. Right-click and select "Add Comment to Line"
-3. Enter your comment in the dialog box
+## Storage
 
-### Editing/Deleting Comments
+Comments are stored in `.comments/comments.local.txt`.
 
-You can edit or delete comments in two ways:
-
-**Method 1: CodeLens (Inline Actions)**
-- Look for the Edit and Delete buttons that appear above lines with comments
-- Click "Edit" to modify the comment text
-- Click "Delete" to remove the comment (with confirmation)
-
-**Method 2: Right-click Menu**
-1. Place your cursor on a line that has a comment (indicated by blue "C" icon)
-2. Right-click to open the context menu
-3. Select "Edit Comment" to modify the comment text
-4. Select "Delete Comment" to remove the comment (with confirmation)
-
-### Viewing Comments
-
-- Comments are indicated by a blue "C" icon in the editor gutter
-- Hover over the icon to see the comment content
-- Access the Comments Tree View from the Activity Bar (Shadow Comments icon)
-- Tree view shows all comments organized by file
-- Click on any comment to navigate to its location in the code
-
-### Exporting Comments
-
-You can export comments in three ways:
-
-1. **Quick Actions**: Use the icon buttons in the Comments tree view title bar:
-   - 🔄 Refresh - Reload comments from file
-   - 📄 Open File - Open .local.comments.txt in editor
-   - ☁️ Sync to Git - Save comments to git notes
-   - 📄 Copy as Raw
-   - 📝 Copy as Markdown  
-   - {} Copy as JSON
-
-2. **Command Palette**: Press Cmd/Ctrl+Shift+P and use:
-   - `Copy Comments as Raw`: Copy the raw `.local.comments.txt` content
-   - `Copy Comments as Markdown`: Copy formatted markdown with clickable links
-   - `Copy Comments as JSON`: Copy comments as JSON structure
-
-### Git Notes Integration
-
-You can sync your comments to Git Notes for permanent storage in your repository:
-
-1. Click the ☁️ "Sync to Git" button in the Comments tree view
-2. Comments are saved to the current HEAD commit's git notes
-3. Share with team using `git push --push-notes`
-4. View notes with `git notes show`
-
-### Storage Format
-
-Comments are stored in `.local.comments.txt` in your workspace root:
+> [!IMPORTANT]
+> Add the `.comments` directory to your `.gitignore`.
 
 ```
-src/extension.ts#L7 "Make this function name simpler and clearer"
-src/extension.ts#L7,10 "Column 10 needs attention"
-src/extension.ts#L13-15 "These comments are unnecessary.\nPlease remove them."
-src/extension.ts#L7,10-8,12 "This range needs refactoring"
-src/test/extension.test.ts#L11 "Please add an explanation."
+src/file.ts#L10 "TODO: Refactor this function"
+src/file.ts#L20-25 "This logic needs review"
 ```
 
-Format: `filepath#L<line>[,<column>][-<endline>[,<endcolumn>]] "comment"`
-- Column positions are optional
-- Single line: `#L7` or `#L7,10` 
-- Line range: `#L13-15`
-- Range with columns: `#L7,10-8,12`
+## Commands
 
-### Markdown Output Example
+Access via Command Palette (Cmd/Ctrl+Shift+P):
+- `Shadow Comments: Add Comment to Line`
+- `Shadow Comments: Show Comments as Markdown`
+- `Shadow Comments: Show Comments as JSON`
+- `Shadow Comments: Save to Git Notes`
 
-When copying as markdown, you get formatted output with clickable links:
+## Tips
 
-```markdown
-## [src/extension.ts](src/extension.ts)
-
-### [line: 7](src/extension.ts#L7)
-
-Make this function name simpler and clearer
-
-### [line: 7:10](src/extension.ts#L7)
-
-Column 10 needs attention
-
-### [line: 13-15](src/extension.ts#L13)
-
-These comments are unnecessary.
-Please remove them.
-```
+- Comments appear as 💬 at line end (hover to see full text)
+- Multi-line comments show with ".." suffix
+- Save comments with Ctrl+S / Cmd+S in the temporary editor
+- Use Git Notes to share comments: Save → `git push --push-notes`
 
 ## Requirements
 
-- VS Code 1.102.0 or higher
-
-## Extension Settings
-
-Currently, this extension does not contribute any settings. Future versions may include:
-- Custom memo file location
-- Comment indicator styles
-- Enable/disable features
-
-## Known Issues
-
-- No markdown preview panel (planned feature)
+- VS Code 1.101.0 or higher
 
 ## Release Notes
 
-### 0.0.1
-
-Initial release with core functionality:
-- Add comments via context menu
-- Edit/Delete comments via context menu
-- Display comment indicators in editor
-- Comments tree view in side panel
-- Copy comments in multiple formats (Raw/Markdown/JSON)
-- File watching for automatic updates
-- Support for #L notation with optional column positions
-- Git Notes integration for permanent storage
-
-## Notes
-
-- The `.local.comments.txt` file is automatically added to `.gitignore`
-- Comments support multi-line text with `\n` escaping
-- File paths in markdown output are clickable links for easy navigation
-
-**Enjoy!**
+See [CHANGELOG.md](CHANGELOG.md) for details.
