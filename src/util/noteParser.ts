@@ -33,10 +33,10 @@ function parseNote(line: string): Note | null {
 		return null;
 	}
 
-	const [, filePath, positionSpec, rawNote] = match;
+	const [, filePath, positionSpec, rawComment] = match;
 
-	// Unescape the note
-	const note = rawNote.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+	// Unescape the comment
+	const comment = rawComment.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
 
 	// Parse positions
 	let startLine: number;
@@ -57,7 +57,7 @@ function parseNote(line: string): Note | null {
 		filePath,
 		startLine,
 		endLine,
-		comment: note,
+		comment: comment,
 		raw: line, // Holds the entire original line
 	};
 }
