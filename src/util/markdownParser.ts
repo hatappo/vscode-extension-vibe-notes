@@ -42,8 +42,8 @@ export function parseMarkdownComments(markdownContent: string): Map<string, stri
 			continue;
 		}
 		
-		// Match line header: ### L10 [code content](src/file.ts#L10) or ### L10-20 [code content](src/file.ts#L10)
-		const lineMatch = line.match(/^###\s+L([\d\-]+)\s+\[.*?\]\(.*?\)/);
+		// Match line header: ### [L10](src/file.ts#L10) or ### [L10-20](src/file.ts#L10)
+		const lineMatch = line.match(/^###\s+\[L([\d\-]+)\]\(.*?\)/);
 		if (lineMatch && currentFile) {
 			// Save previous comment if exists
 			if (currentLineSpec && commentLines.length > 0) {
@@ -59,6 +59,11 @@ export function parseMarkdownComments(markdownContent: string): Map<string, stri
 		
 		// Collect comment lines
 		if (collectingComment) {
+			// Skip quote blocks (code preview)
+			if (line.startsWith("> ")) {
+				continue;
+			}
+			
 			// Stop collecting at next header or empty line followed by header
 			const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
 			if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {
@@ -175,8 +180,8 @@ export function parseMarkdownToComments(markdownContent: string): {
 			continue;
 		}
 		
-		// Match line header: ### L10 [code content](src/file.ts#L10) or ### L10-20 [code content](src/file.ts#L10)
-		const lineMatch = line.match(/^###\s+L([\d\-]+)\s+\[.*?\]\(.*?\)/);
+		// Match line header: ### [L10](src/file.ts#L10) or ### [L10-20](src/file.ts#L10)
+		const lineMatch = line.match(/^###\s+\[L([\d\-]+)\]\(.*?\)/);
 		if (lineMatch && currentFile) {
 			// Save previous comment if exists
 			if (currentLineSpec && commentLines.length > 0) {
@@ -196,6 +201,11 @@ export function parseMarkdownToComments(markdownContent: string): {
 		
 		// Collect comment lines
 		if (collectingComment) {
+			// Skip quote blocks (code preview)
+			if (line.startsWith("> ")) {
+				continue;
+			}
+			
 			// Stop collecting at next header or empty line followed by header
 			const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
 			if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {

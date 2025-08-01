@@ -157,15 +157,16 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Create clickable link to specific line (using relative path)
 				const lineLink = `${filePath}#L${comment.startLine}`;
 				
+				// Line number as link
+				markdownSections.push(`### [${lineSpec}](${lineLink})`);
+				markdownSections.push("");
+				
+				// Code preview in quote block
 				if (codePreview) {
-					// New format with code preview
-					markdownSections.push(`### ${lineSpec} [${codePreview}](${lineLink})`);
-				} else {
-					// Fallback format when code is not available
-					markdownSections.push(`### ${lineSpec} [→](${lineLink})`);
+					markdownSections.push(`> ${codePreview}`);
+					markdownSections.push("");
 				}
 				
-				markdownSections.push("");
 				markdownSections.push(comment.comment);
 				markdownSections.push("");
 			}
