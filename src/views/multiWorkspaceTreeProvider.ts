@@ -122,17 +122,9 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		return fileComments.map((comment) => {
 			let label: string;
 			if (comment.startLine === comment.endLine) {
-				if (comment.startColumn !== undefined) {
-					label = `L${comment.startLine}:${comment.startColumn}`;
-				} else {
-					label = `L${comment.startLine}`;
-				}
+				label = `L${comment.startLine}`;
 			} else {
-				if (comment.startColumn !== undefined && comment.endColumn !== undefined) {
-					label = `L${comment.startLine}:${comment.startColumn}-${comment.endLine}:${comment.endColumn}`;
-				} else {
-					label = `L${comment.startLine}-${comment.endLine}`;
-				}
+				label = `L${comment.startLine}-${comment.endLine}`;
 			}
 
 			const item = new TreeItem(label, comment.comment, vscode.TreeItemCollapsibleState.None, "comment");

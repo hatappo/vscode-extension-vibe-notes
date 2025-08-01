@@ -3,8 +3,6 @@ interface ReviewComment {
 	filePath: string;
 	startLine: number;
 	endLine: number;
-	startColumn?: number; // Optional column position
-	endColumn?: number; // Optional column position
 	comment: string;
 	raw: string; // Holds the entire original line
 }
@@ -24,17 +22,9 @@ interface ParseError {
 }
 
 /** Regular expression for parsing review comments */
-// Matches: file.ts#L7 or file.ts#L7,10 or file.ts#L7-9 or file.ts#L7,10-8,12
-const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:,\d+)?(?:-\d+(?:,\d+)?)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+// Matches: file.ts#L7 or file.ts#L7-9
+const reviewLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
 
-/** Parse position (line and optional column) */
-function parsePosition(pos: string): { line: number; column?: number } {
-	const parts = pos.split(",");
-	return {
-		line: Number(parts[0]),
-		column: parts[1] ? Number(parts[1]) : undefined,
-	};
-}
 
 /** Parse a single line review comment */
 function parseReviewComment(line: string): ReviewComment | null {
@@ -51,46 +41,25 @@ function parseReviewComment(line: string): ReviewComment | null {
 	// Parse positions
 	let startLine: number;
 	let endLine: number;
-	let startColumn: number | undefined;
-	let endColumn: number | undefined;
 
 	if (positionSpec.includes("-")) {
-		// Range: L7-9 or L7,10-8,12
+		// Range: L7-9
 		const [startPos, endPos] = positionSpec.split("-");
-		const start = parsePosition(startPos);
-		const end = parsePosition(endPos);
-
-		startLine = start.line;
-		startColumn = start.column;
-		endLine = end.line;
-		endColumn = end.column;
+		startLine = Number(startPos);
+		endLine = Number(endPos);
 	} else {
-		// Single position: L7 or L7,10
-		const pos = parsePosition(positionSpec);
-		startLine = pos.line;
-		startColumn = pos.column;
-		endLine = pos.line;
-		endColumn = pos.column;
+		// Single position: L7
+		startLine = Number(positionSpec);
+		endLine = startLine;
 	}
 
 	return {
 		filePath,
 		startLine,
 		endLine,
-		startColumn,
-		endColumn,
 		comment,
 		raw: line, // Holds the entire original line
 	};
-}
-
-/** Parse multiple line review comments */
-function parseReviewFile(content: string): ReviewComment[] {
-	return content
-		.split("\n")
-		.filter((line: string) => line.trim()) // Exclude empty lines
-		.map(parseReviewComment)
-		.filter((comment): comment is ReviewComment => comment !== null); // Exclude lines that failed to parse
 }
 
 /** Parse multiple line review comments (with error handling) */
@@ -123,71 +92,6 @@ function parseReviewFileWithErrors(content: string): ParseResult {
 	};
 }
 
-/** Convert multiple line review comments to markdown */
-function convertToMarkdown(comments: ReviewComment[]): string {
-	if (comments.length === 0) {
-		return "";
-	}
-
-	// Group by file path
-	const groupedByFile = comments.reduce(
-		(acc, comment) => {
-			if (!acc[comment.filePath]) {
-				acc[comment.filePath] = [];
-			}
-			acc[comment.filePath].push(comment);
-			return acc;
-		},
-		{} as Record<string, ReviewComment[]>,
-	);
-
-	// Generate markdown
-	const markdownSections: string[] = [];
-
-	for (const [filePath, fileComments] of Object.entries(groupedByFile)) {
-		// File path header
-		markdownSections.push(`## [${filePath}](${filePath})`);
-		markdownSections.push("");
-
-		// Each comment
-		for (const comment of fileComments) {
-			// Line number header
-			let lineText: string;
-			let linkTarget: string;
-
-			if (comment.startLine === comment.endLine) {
-				if (comment.startColumn !== undefined) {
-					lineText = `line: ${comment.startLine}:${comment.startColumn}`;
-				} else {
-					lineText = `line: ${comment.startLine}`;
-				}
-				linkTarget = `${comment.filePath}#L${comment.startLine}`;
-			} else {
-				if (comment.startColumn !== undefined && comment.endColumn !== undefined) {
-					lineText = `line: ${comment.startLine}:${comment.startColumn}-${comment.endLine}:${comment.endColumn}`;
-				} else {
-					lineText = `line: ${comment.startLine}-${comment.endLine}`;
-				}
-				linkTarget = `${comment.filePath}#L${comment.startLine}`;
-			}
-
-			const lineHeader = `### [${lineText}](${linkTarget})`;
-
-			markdownSections.push(lineHeader);
-			markdownSections.push("");
-			markdownSections.push(comment.comment);
-			markdownSections.push("");
-		}
-	}
-
-	// Remove the last empty line
-	if (markdownSections[markdownSections.length - 1] === "") {
-		markdownSections.pop();
-	}
-
-	return markdownSections.join("\n");
-}
-
-export { parseReviewComment, parseReviewFile, parseReviewFileWithErrors, convertToMarkdown };
+export { parseReviewComment, parseReviewFileWithErrors };
 
 export type { ReviewComment, ParseResult, ParseError };
