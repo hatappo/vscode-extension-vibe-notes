@@ -12,6 +12,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Inline comment display with 💬 emoji at line end
 - Multi-line comment indicator with ".." suffix
 - Hover support for full comment text on inline display
+- Temporary file editor for adding/editing multi-line comments
+- Auto-close editor after saving comment
 
 ### Changed
 - Migrated storage from `.local.comments.txt` to `.comments/comments.local.txt`

@@ -8,6 +8,10 @@ import { CommentDecorationProvider } from './decorations/commentDecorationProvid
 import { MultiWorkspaceTreeProvider } from './views/multiWorkspaceTreeProvider';
 import { ReviewComment } from './util/reviewCommentParser';
 import { CommentCodeLensProvider } from './providers/commentCodeLensProvider';
+import { TempFileManager } from './util/tempFileManager';
+
+// Global map to store temp file managers for cleanup on deactivate
+const tempFileManagers = new Map<string, TempFileManager>();
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -22,56 +26,62 @@ export async function activate(context: vscode.ExtensionContext) {
 	const treeProvider = new MultiWorkspaceTreeProvider();
 
 	// Initialize handlers for existing workspace folders
-	if (vscode.workspace.workspaceFolders) {
-		for (const folder of vscode.workspace.workspaceFolders) {
-			const handler = new MemoFileHandler(folder);
-			handler.initialize();
-			memoHandlers.set(folder.uri.fsPath, handler);
-			
-			// Create decoration provider
-			const decorationProvider = new CommentDecorationProvider(handler, folder);
-			decorationProviders.set(folder.uri.fsPath, decorationProvider);
-			
-			// Create CodeLens provider
-			const codeLensProvider = new CommentCodeLensProvider(handler, folder);
-			codeLensProviders.set(folder.uri.fsPath, codeLensProvider);
-			
-			// Register CodeLens provider
-			const codeLensDisposable = vscode.languages.registerCodeLensProvider(
-				{ scheme: 'file', pattern: new vscode.RelativePattern(folder, '**/*') },
-				codeLensProvider
-			);
-			context.subscriptions.push(codeLensDisposable);
-			
-			// Initial decoration update
-			decorationProvider.updateDecorations();
-			
-			// Add workspace to tree provider
-			treeProvider.addWorkspace(folder, handler);
-			
-			// Set up file watcher
-			const watcher = handler.getFileWatcher();
-			if (watcher) {
-				const handleFileChange = async () => {
-					await decorationProvider.updateDecorations();
-					await treeProvider.refresh();
-					codeLensProvider.refresh();
-				};
-
-				watcher.onDidChange(handleFileChange);
-				watcher.onDidCreate(handleFileChange);
-				watcher.onDidDelete(handleFileChange);
-			}
-		}
-		
-		// Register tree view after all workspaces are initialized
-		await treeProvider.refresh();
-		const treeView = vscode.window.createTreeView('shadowCommentsView', {
-			treeDataProvider: treeProvider,
-			showCollapseAll: true
-		});
-		context.subscriptions.push(treeView);
+	if (!vscode.workspace.workspaceFolders) {
+		return;
 	}
+	
+	for (const folder of vscode.workspace.workspaceFolders) {
+		const handler = new MemoFileHandler(folder);
+		handler.initialize();
+		memoHandlers.set(folder.uri.fsPath, handler);
+		
+		// Create decoration provider
+		const decorationProvider = new CommentDecorationProvider(handler, folder);
+		decorationProviders.set(folder.uri.fsPath, decorationProvider);
+		
+		// Create CodeLens provider
+		const codeLensProvider = new CommentCodeLensProvider(handler, folder);
+		codeLensProviders.set(folder.uri.fsPath, codeLensProvider);
+		
+		// Create temp file manager
+		const tempFileManager = new TempFileManager(folder.uri.fsPath);
+		tempFileManagers.set(folder.uri.fsPath, tempFileManager);
+		
+		// Register CodeLens provider
+		const codeLensDisposable = vscode.languages.registerCodeLensProvider(
+			{ scheme: 'file', pattern: new vscode.RelativePattern(folder, '**/*') },
+			codeLensProvider
+		);
+		context.subscriptions.push(codeLensDisposable);
+		
+		// Initial decoration update
+		decorationProvider.updateDecorations();
+		
+		// Add workspace to tree provider
+		treeProvider.addWorkspace(folder, handler);
+		
+		// Set up file watcher
+		const watcher = handler.getFileWatcher();
+		if (watcher) {
+			const handleFileChange = async () => {
+				await decorationProvider.updateDecorations();
+				await treeProvider.refresh();
+				codeLensProvider.refresh();
+			};
+
+			watcher.onDidChange(handleFileChange);
+			watcher.onDidCreate(handleFileChange);
+			watcher.onDidDelete(handleFileChange);
+		}
+	}
+	
+	// Register tree view after all workspaces are initialized
+	await treeProvider.refresh();
+	const treeView = vscode.window.createTreeView('shadowCommentsView', {
+		treeDataProvider: treeProvider,
+		showCollapseAll: true
+	});
+	context.subscriptions.push(treeView);
 
 	// Get handler for current workspace
 	const getCurrentHandler = (): MemoFileHandler | undefined => {
@@ -153,17 +163,52 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Common function to edit a comment
 	const editComment = async (comment: ReviewComment, handler: MemoFileHandler, workspaceFolder: vscode.WorkspaceFolder): Promise<void> => {
-		// Prompt for new comment text
-		const newComment = await vscode.window.showInputBox({
-			prompt: 'Edit comment',
-			value: comment.comment,
-			placeHolder: 'Enter your comment...'
-		});
-
-		if (newComment !== undefined && newComment !== comment.comment) {
-			await handler.updateComment(comment, newComment);
-			await updateUIComponents(workspaceFolder);
+		const tempFileManager = tempFileManagers.get(workspaceFolder.uri.fsPath);
+		if (!tempFileManager) {
+			vscode.window.showErrorMessage('Temp file manager not found');
+			return;
 		}
+
+		// Create header for the temp file
+		const header = `# Edit Shadow Comment
+# File: ${comment.filePath}
+# Line: ${comment.startLine === comment.endLine ? comment.startLine : `${comment.startLine}-${comment.endLine}`}
+# 
+# Edit your comment below and save the file (Ctrl+S / Cmd+S).
+# Close without saving to cancel.
+# ========================================
+
+`;
+
+		// Open temp file for comment editing
+		await tempFileManager.openTempFile(
+			'EditComment',
+			header + comment.comment,
+			async (content) => {
+				if (content === null) {
+					return;
+				}
+				
+				// Extract comment text (remove header)
+				const lines = content.split('\n');
+				const separatorIndex = lines.findIndex(line => line.includes('========================================'));
+				
+				if (separatorIndex === -1 || separatorIndex >= lines.length - 1) {
+					return;
+				}
+				
+				const commentLines = lines.slice(separatorIndex + 1);
+				const newComment = commentLines.join('\n').trim();
+				
+				if (!newComment || newComment === comment.comment) {
+					return;
+				}
+				
+				await handler.updateComment(comment, newComment);
+				await updateUIComponents(workspaceFolder);
+				vscode.window.showInformationMessage('Comment updated successfully');
+			}
+		);
 	};
 
 	// Common function to delete a comment
@@ -218,24 +263,58 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri)!;
+		const tempFileManager = tempFileManagers.get(workspaceFolder.uri.fsPath);
+		if (!tempFileManager) {
+			vscode.window.showErrorMessage('Temp file manager not found');
+			return;
+		}
+
 		const selection = editor.selection;
 		const startLine = selection.start.line + 1; // Convert to 1-based
 		const endLine = selection.end.line + 1;
+		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
 
-		// Prompt for comment
-		const comment = await vscode.window.showInputBox({
-			prompt: `Add comment for line ${startLine === endLine ? startLine : `${startLine}-${endLine}`}`,
-			placeHolder: 'Enter your comment...'
-		});
+		// Create header for the temp file
+		const header = `# Add Shadow Comment
+# File: ${relativePath}
+# Line: ${startLine === endLine ? startLine : `${startLine}-${endLine}`}
+# 
+# Enter your comment below and save the file (Ctrl+S / Cmd+S).
+# Close without saving to cancel.
+# ========================================
 
-		if (comment) {
-			const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri)!;
-			const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
-			await handler.addComment(relativePath, startLine, endLine, comment);
-			
-			// Update decorations and tree view
-			await updateUIComponents(workspaceFolder);
-		}
+`;
+
+		// Open temp file for comment input
+		await tempFileManager.openTempFile(
+			'AddComment',
+			header,
+			async (content) => {
+				if (content === null) {
+					return;
+				}
+				
+				// Extract comment text (remove header)
+				const lines = content.split('\n');
+				const separatorIndex = lines.findIndex(line => line.includes('========================================'));
+				
+				if (separatorIndex === -1 || separatorIndex >= lines.length - 1) {
+					return;
+				}
+				
+				const commentLines = lines.slice(separatorIndex + 1);
+				const comment = commentLines.join('\n').trim();
+				
+				if (!comment) {
+					return;
+				}
+				
+				await handler.addComment(relativePath, startLine, endLine, comment);
+				await updateUIComponents(workspaceFolder);
+				vscode.window.showInformationMessage('Comment added successfully');
+			}
+		);
 	});
 
 	// Command: Show as markdown
@@ -493,15 +572,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Apply decorations to new editors
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-			if (editor) {
-				const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-				if (workspaceFolder) {
-					const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
-					if (decorationProvider) {
-						decorationProvider.applyDecorationsToEditor(editor);
-					}
-				}
+			if (!editor) {
+				return;
 			}
+			
+			const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+			if (!workspaceFolder) {
+				return;
+			}
+			
+			const decorationProvider = decorationProviders.get(workspaceFolder.uri.fsPath);
+			if (!decorationProvider) {
+				return;
+			}
+			
+			decorationProvider.applyDecorationsToEditor(editor);
 		})
 	);
 
@@ -519,4 +604,9 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export async function deactivate() {
+	// Clean up all temp file managers
+	for (const [_, tempFileManager] of tempFileManagers) {
+		await tempFileManager.dispose();
+	}
+}

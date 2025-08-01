@@ -3,7 +3,7 @@
   "displayName": "Shadow Comments",
   "description": "Keep private code comments that never touch your source files",
   "publisher": "hatappo",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
   "repository": {
     "type": "git",

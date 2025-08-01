@@ -13,7 +13,7 @@ Keep private code comments that live in the shadows - never touching your source
 
 ## Quick Start
 
-1. **Add a comment**: Right-click on any line → "Add Shadow Comment to Line"
+1. **Add a comment**: Right-click on any line → "Add Shadow Comment to Line" (opens a temporary editor for multi-line input)
 2. **Edit/Delete**: Use the CodeLens buttons above commented lines
 3. **View all comments**: Open the Shadow Comments panel in the Activity Bar
 
@@ -38,6 +38,7 @@ Access via Command Palette (Cmd/Ctrl+Shift+P):
 
 - 💡 Comments appear as 💬 at line end (hover to see full text)
 - 💡 Multi-line comments show with ".." suffix
+- 💡 Save comments with Ctrl+S / Cmd+S in the temporary editor
 - 💡 Use Git Notes to share comments: Save → `git push --push-notes`
 
 ## Requirements
