@@ -1,111 +1,110 @@
 {
-	"name": "shadow-comments",
-	"displayName": "Shadow Comments",
-	"description": "Keep private code comments that never touch your source files",
+	"name": "vibe-notes",
+	"displayName": "Vibe Notes",
+	"description": "Private code notes that vibe with your workflow",
 	"publisher": "hatappo",
 	"version": "0.1.0",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/hatappo/vscode-extension-shadow-comments"
+		"url": "https://github.com/hatappo/vscode-extension-vibe-notes"
 	},
 	"engines": {
 		"vscode": "^1.101.0"
 	},
 	"categories": ["Other"],
 	"keywords": [
-		"comments",
 		"notes",
-		"git notes",
-		"code review",
-		"annotations",
+		"comments",
+		"private notes",
+		"vibe notes",
+		"code annotations",
 		"agentic coding",
 		"vibe coding",
-		"ai coding",
-		"private comments"
+		"ai coding"
 	],
 	"activationEvents": ["onStartupFinished"],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "shadow-comments.addComment",
-				"title": "Shadow Comments: Add Comment to Line"
+				"command": "vibe-notes.addNote",
+				"title": "Vibe Notes: Add Note to Line"
 			},
 			{
-				"command": "shadow-comments.editCommentAtCursor",
-				"title": "Shadow Comments: Edit Comment"
+				"command": "vibe-notes.editNoteAtCursor",
+				"title": "Vibe Notes: Edit Note"
 			},
 			{
-				"command": "shadow-comments.deleteCommentAtCursor",
-				"title": "Shadow Comments: Delete Comment"
+				"command": "vibe-notes.deleteNoteAtCursor",
+				"title": "Vibe Notes: Delete Note"
 			},
 			{
-				"command": "shadow-comments.editCommentAtLine",
-				"title": "Shadow Comments: Edit Comment at Line"
+				"command": "vibe-notes.editNoteAtLine",
+				"title": "Vibe Notes: Edit Note at Line"
 			},
 			{
-				"command": "shadow-comments.deleteCommentAtLine",
-				"title": "Shadow Comments: Delete Comment at Line"
+				"command": "vibe-notes.deleteNoteAtLine",
+				"title": "Vibe Notes: Delete Note at Line"
 			},
 			{
-				"command": "shadow-comments.showMarkdown",
-				"title": "Shadow Comments: Open/Refresh Markdown",
+				"command": "vibe-notes.showMarkdown",
+				"title": "Vibe Notes: Open/Refresh Markdown",
 				"icon": "$(markdown)"
 			},
 			{
-				"command": "shadow-comments.refreshTree",
-				"title": "Shadow Comments: Refresh View",
+				"command": "vibe-notes.refreshTree",
+				"title": "Vibe Notes: Refresh View",
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "shadow-comments.saveToGitNotes",
-				"title": "Shadow Comments: Save to Git Notes",
+				"command": "vibe-notes.saveToGitNotes",
+				"title": "Vibe Notes: Save to Git Notes",
 				"icon": "$(save)"
 			},
 			{
-				"command": "shadow-comments.setupGitignore",
-				"title": "Shadow Comments: Setup .gitignore",
+				"command": "vibe-notes.setupGitignore",
+				"title": "Vibe Notes: Setup .gitignore",
 				"icon": "$(gear)"
 			}
 		],
 		"menus": {
 			"editor/context": [
 				{
-					"command": "shadow-comments.addComment",
+					"command": "vibe-notes.addNote",
 					"group": "",
 					"when": "editorTextFocus"
 				},
 				{
-					"command": "shadow-comments.editCommentAtCursor",
+					"command": "vibe-notes.editNoteAtCursor",
 					"group": "",
 					"when": "editorTextFocus"
 				},
 				{
-					"command": "shadow-comments.deleteCommentAtCursor",
+					"command": "vibe-notes.deleteNoteAtCursor",
 					"group": "",
 					"when": "editorTextFocus"
 				}
 			],
 			"view/title": [
 				{
-					"command": "shadow-comments.refreshTree",
-					"when": "view == shadowCommentsView",
+					"command": "vibe-notes.refreshTree",
+					"when": "view == vibeNotesView",
 					"group": "navigation@0"
 				},
 				{
-					"command": "shadow-comments.showMarkdown",
-					"when": "view == shadowCommentsView",
+					"command": "vibe-notes.showMarkdown",
+					"when": "view == vibeNotesView",
 					"group": "navigation@1"
 				},
 				{
-					"command": "shadow-comments.saveToGitNotes",
-					"when": "view == shadowCommentsView",
+					"command": "vibe-notes.saveToGitNotes",
+					"when": "view == vibeNotesView",
 					"group": "navigation@2"
 				},
 				{
-					"command": "shadow-comments.setupGitignore",
-					"when": "view == shadowCommentsView",
+					"command": "vibe-notes.setupGitignore",
+					"when": "view == vibeNotesView",
 					"group": "navigation@3"
 				}
 			]
@@ -113,19 +112,19 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "shadow-comments",
-					"title": "Shadow Comments",
+					"id": "vibe-notes",
+					"title": "Vibe Notes",
 					"icon": "$(comment-discussion)"
 				}
 			]
 		},
 		"views": {
-			"shadow-comments": [
+			"vibe-notes": [
 				{
-					"id": "shadowCommentsView",
+					"id": "vibeNotesView",
 					"name": "",
-					"icon": "$(comment)",
-					"contextualTitle": "Shadow Comments"
+					"icon": "$(note)",
+					"contextualTitle": "Vibe Notes"
 				}
 			]
 		}

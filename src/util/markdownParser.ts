@@ -1,9 +1,9 @@
-import { ReviewComment } from "./reviewCommentParser";
+import { Note } from "./noteParser";
 
 /**
- * Parsed comment from markdown
+ * Parsed note from markdown
  */
-export interface ParsedComment {
+export interface ParsedNote {
 	filePath: string;
 	startLine: number;
 	endLine: number;
@@ -11,17 +11,17 @@ export interface ParsedComment {
 }
 
 /**
- * Parse markdown content and extract comments
- * Only extracts content of existing comments, does not support adding/removing comments
+ * Parse markdown content and extract notes
+ * Only extracts content of existing notes, does not support adding/removing notes
  */
-export function parseMarkdownComments(markdownContent: string): Map<string, string> {
-	const commentMap = new Map<string, string>();
+export function parseMarkdownNotes(markdownContent: string): Map<string, string> {
+	const noteMap = new Map<string, string>();
 	const lines = markdownContent.split("\n");
 	
 	let currentFile: string | null = null;
 	let currentLineSpec: string | null = null;
-	let collectingComment = false;
-	let commentLines: string[] = [];
+	let collectingNote = false;
+	let noteLines: string[] = [];
 	
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
@@ -29,36 +29,36 @@ export function parseMarkdownComments(markdownContent: string): Map<string, stri
 		// Match file header: ## [src/file.ts](src/file.ts)
 		const fileMatch = line.match(/^##\s+\[(.+?)\]/);
 		if (fileMatch) {
-			// Save previous comment if exists
-			if (currentFile && currentLineSpec && commentLines.length > 0) {
+			// Save previous note if exists
+			if (currentFile && currentLineSpec && noteLines.length > 0) {
 				const key = `${currentFile}#L${currentLineSpec}`;
-				commentMap.set(key, commentLines.join("\n").trim());
+				noteMap.set(key, noteLines.join("\n").trim());
 			}
 			
 			currentFile = fileMatch[1];
 			currentLineSpec = null;
-			collectingComment = false;
-			commentLines = [];
+			collectingNote = false;
+			noteLines = [];
 			continue;
 		}
 		
 		// Match line header: ### [L10](src/file.ts#L10) or ### [L10-20](src/file.ts#L10)
 		const lineMatch = line.match(/^###\s+\[L([\d\-]+)\]\(.*?\)/);
 		if (lineMatch && currentFile) {
-			// Save previous comment if exists
-			if (currentLineSpec && commentLines.length > 0) {
+			// Save previous note if exists
+			if (currentLineSpec && noteLines.length > 0) {
 				const key = `${currentFile}#L${currentLineSpec}`;
-				commentMap.set(key, commentLines.join("\n").trim());
+				noteMap.set(key, noteLines.join("\n").trim());
 			}
 			
 			currentLineSpec = lineMatch[1];
-			collectingComment = true;
-			commentLines = [];
+			collectingNote = true;
+			noteLines = [];
 			continue;
 		}
 		
-		// Collect comment lines
-		if (collectingComment) {
+		// Collect note lines
+		if (collectingNote) {
 			// Skip quote blocks (code preview)
 			if (line.startsWith("> ")) {
 				continue;
@@ -67,95 +67,95 @@ export function parseMarkdownComments(markdownContent: string): Map<string, stri
 			// Stop collecting at next header or empty line followed by header
 			const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
 			if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {
-				collectingComment = false;
-				if (currentFile && currentLineSpec && commentLines.length > 0) {
+				collectingNote = false;
+				if (currentFile && currentLineSpec && noteLines.length > 0) {
 					const key = `${currentFile}#L${currentLineSpec}`;
-					commentMap.set(key, commentLines.join("\n").trim());
+					noteMap.set(key, noteLines.join("\n").trim());
 				}
-				commentLines = [];
-			} else if (line !== "" || commentLines.length > 0) {
-				// Include empty lines within comments, but not leading empty lines
-				commentLines.push(line);
+				noteLines = [];
+			} else if (line !== "" || noteLines.length > 0) {
+				// Include empty lines within notes, but not leading empty lines
+				noteLines.push(line);
 			}
 		}
 	}
 	
-	// Save last comment if exists
-	if (currentFile && currentLineSpec && commentLines.length > 0) {
+	// Save last note if exists
+	if (currentFile && currentLineSpec && noteLines.length > 0) {
 		const key = `${currentFile}#L${currentLineSpec}`;
-		commentMap.set(key, commentLines.join("\n").trim());
+		noteMap.set(key, noteLines.join("\n").trim());
 	}
 	
-	return commentMap;
+	return noteMap;
 }
 
 /**
- * Find matching comment in the list by file and line range
+ * Find matching note in the list by file and line range
  */
-export function findMatchingComment(
-	comments: ReviewComment[],
+export function findMatchingNote(
+	notes: Note[],
 	filePath: string,
 	lineSpec: string
-): ReviewComment | undefined {
-	return comments.find(comment => {
-		if (comment.filePath !== filePath) {
+): Note | undefined {
+	return notes.find(note => {
+		if (note.filePath !== filePath) {
 			return false;
 		}
 		
-		// Build expected line spec for this comment
-		const expectedLineSpec = comment.startLine === comment.endLine
-			? `${comment.startLine}`
-			: `${comment.startLine}-${comment.endLine}`;
+		// Build expected line spec for this note
+		const expectedLineSpec = note.startLine === note.endLine
+			? `${note.startLine}`
+			: `${note.startLine}-${note.endLine}`;
 		
 		return expectedLineSpec === lineSpec;
 	});
 }
 
 /**
- * Apply markdown changes to comments (only updates content, no add/delete)
+ * Apply markdown changes to notes (only updates content, no add/delete)
  */
 export function applyMarkdownChanges(
-	existingComments: ReviewComment[],
-	markdownComments: Map<string, string>
-): { updatedComments: ReviewComment[], hasChanges: boolean } {
+	existingNotes: Note[],
+	markdownNotes: Map<string, string>
+): { updatedNotes: Note[], hasChanges: boolean } {
 	let hasChanges = false;
-	const updatedComments: ReviewComment[] = [];
+	const updatedNotes: Note[] = [];
 	
-	for (const comment of existingComments) {
-		const lineSpec = comment.startLine === comment.endLine
-			? `${comment.startLine}`
-			: `${comment.startLine}-${comment.endLine}`;
-		const key = `${comment.filePath}#L${lineSpec}`;
+	for (const note of existingNotes) {
+		const lineSpec = note.startLine === note.endLine
+			? `${note.startLine}`
+			: `${note.startLine}-${note.endLine}`;
+		const key = `${note.filePath}#L${lineSpec}`;
 		
-		const newContent = markdownComments.get(key);
-		if (newContent !== undefined && newContent !== comment.comment) {
+		const newContent = markdownNotes.get(key);
+		if (newContent !== undefined && newContent !== note.comment) {
 			// Content changed
 			hasChanges = true;
-			updatedComments.push({
-				...comment,
+			updatedNotes.push({
+				...note,
 				comment: newContent
 			});
 		}
 	}
 	
-	return { updatedComments, hasChanges };
+	return { updatedNotes, hasChanges };
 }
 
 /**
- * Parse markdown and extract all comments as complete ReviewComment objects
+ * Parse markdown and extract all notes as complete Note objects
  */
-export function parseMarkdownToComments(markdownContent: string): { 
-	comments: ParsedComment[]; 
+export function parseMarkdownToNotes(markdownContent: string): { 
+	notes: ParsedNote[]; 
 	errors: string[];
 } {
-	const comments: ParsedComment[] = [];
+	const notes: ParsedNote[] = [];
 	const errors: string[] = [];
 	const lines = markdownContent.split("\n");
 	
 	let currentFile: string | null = null;
 	let currentLineSpec: string | null = null;
-	let collectingComment = false;
-	let commentLines: string[] = [];
+	let collectingNote = false;
+	let noteLines: string[] = [];
 	
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
@@ -163,44 +163,44 @@ export function parseMarkdownToComments(markdownContent: string): {
 		// Match file header: ## [src/file.ts](src/file.ts)
 		const fileMatch = line.match(/^##\s+\[(.+?)\]/);
 		if (fileMatch) {
-			// Save previous comment if exists
-			if (currentFile && currentLineSpec && commentLines.length > 0) {
-				const parsed = parseLineSpec(currentFile, currentLineSpec, commentLines.join("\n").trim());
+			// Save previous note if exists
+			if (currentFile && currentLineSpec && noteLines.length > 0) {
+				const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
 				if (parsed.error) {
 					errors.push(parsed.error);
-				} else if (parsed.comment) {
-					comments.push(parsed.comment);
+				} else if (parsed.note) {
+					notes.push(parsed.note);
 				}
 			}
 			
 			currentFile = fileMatch[1];
 			currentLineSpec = null;
-			collectingComment = false;
-			commentLines = [];
+			collectingNote = false;
+			noteLines = [];
 			continue;
 		}
 		
 		// Match line header: ### [L10](src/file.ts#L10) or ### [L10-20](src/file.ts#L10)
 		const lineMatch = line.match(/^###\s+\[L([\d\-]+)\]\(.*?\)/);
 		if (lineMatch && currentFile) {
-			// Save previous comment if exists
-			if (currentLineSpec && commentLines.length > 0) {
-				const parsed = parseLineSpec(currentFile, currentLineSpec, commentLines.join("\n").trim());
+			// Save previous note if exists
+			if (currentLineSpec && noteLines.length > 0) {
+				const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
 				if (parsed.error) {
 					errors.push(parsed.error);
-				} else if (parsed.comment) {
-					comments.push(parsed.comment);
+				} else if (parsed.note) {
+					notes.push(parsed.note);
 				}
 			}
 			
 			currentLineSpec = lineMatch[1];
-			collectingComment = true;
-			commentLines = [];
+			collectingNote = true;
+			noteLines = [];
 			continue;
 		}
 		
-		// Collect comment lines
-		if (collectingComment) {
+		// Collect note lines
+		if (collectingNote) {
 			// Skip quote blocks (code preview)
 			if (line.startsWith("> ")) {
 				continue;
@@ -209,45 +209,45 @@ export function parseMarkdownToComments(markdownContent: string): {
 			// Stop collecting at next header or empty line followed by header
 			const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
 			if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {
-				collectingComment = false;
-				if (currentFile && currentLineSpec && commentLines.length > 0) {
-					const parsed = parseLineSpec(currentFile, currentLineSpec, commentLines.join("\n").trim());
+				collectingNote = false;
+				if (currentFile && currentLineSpec && noteLines.length > 0) {
+					const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
 					if (parsed.error) {
 						errors.push(parsed.error);
-					} else if (parsed.comment) {
-						comments.push(parsed.comment);
+					} else if (parsed.note) {
+						notes.push(parsed.note);
 					}
 				}
-				commentLines = [];
-			} else if (line !== "" || commentLines.length > 0) {
-				// Include empty lines within comments, but not leading empty lines
-				commentLines.push(line);
+				noteLines = [];
+			} else if (line !== "" || noteLines.length > 0) {
+				// Include empty lines within notes, but not leading empty lines
+				noteLines.push(line);
 			}
 		}
 	}
 	
-	// Save last comment if exists
-	if (currentFile && currentLineSpec && commentLines.length > 0) {
-		const parsed = parseLineSpec(currentFile, currentLineSpec, commentLines.join("\n").trim());
+	// Save last note if exists
+	if (currentFile && currentLineSpec && noteLines.length > 0) {
+		const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
 		if (parsed.error) {
 			errors.push(parsed.error);
-		} else if (parsed.comment) {
-			comments.push(parsed.comment);
+		} else if (parsed.note) {
+			notes.push(parsed.note);
 		}
 	}
 	
-	return { comments, errors };
+	return { notes, errors };
 }
 
 /**
- * Parse line specification and create ParsedComment
+ * Parse line specification and create ParsedNote
  */
-function parseLineSpec(filePath: string, lineSpec: string, commentText: string): {
-	comment?: ParsedComment;
+function parseLineSpec(filePath: string, lineSpec: string, noteText: string): {
+	note?: ParsedNote;
 	error?: string;
 } {
-	if (!commentText) {
-		return { error: `Empty comment for ${filePath}#L${lineSpec}` };
+	if (!noteText) {
+		return { error: `Empty note for ${filePath}#L${lineSpec}` };
 	}
 	
 	// Parse line spec: "10" or "10-20"
@@ -269,11 +269,11 @@ function parseLineSpec(filePath: string, lineSpec: string, commentText: string):
 		}
 		
 		return {
-			comment: {
+			note: {
 				filePath,
 				startLine,
 				endLine,
-				comment: commentText
+				comment: noteText
 			}
 		};
 	} else {
@@ -288,11 +288,11 @@ function parseLineSpec(filePath: string, lineSpec: string, commentText: string):
 		}
 		
 		return {
-			comment: {
+			note: {
 				filePath,
 				startLine: line,
 				endLine: line,
-				comment: commentText
+				comment: noteText
 			}
 		};
 	}
