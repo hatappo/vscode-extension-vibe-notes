@@ -5,8 +5,8 @@ import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser"
 import { parseMarkdownComments, applyMarkdownChanges, parseMarkdownToComments, ParsedComment } from "./markdownParser";
 
 export class MemoFileHandler {
-	private static readonly COMMENTS_DIR = ".comments";  // Still needed for temp files
-	private static readonly DEFAULT_MEMO_FILE = ".comments.local.txt";
+	private static readonly COMMENTS_DIR = ".comments";
+	private static readonly DEFAULT_MEMO_FILE = "data.txt";
 	private static readonly MARKDOWN_FILE = ".comments.local.md";
 	private memoFilePath: string;
 	private markdownFilePath: string;
@@ -17,8 +17,9 @@ export class MemoFileHandler {
 	public readonly onCommentsChanged = this._onCommentsChanged.event;
 
 	constructor(private workspaceFolder: vscode.WorkspaceFolder) {
-		// File is now in workspace root
-		this.memoFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.DEFAULT_MEMO_FILE);
+		// Data file in .comments directory
+		this.memoFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.COMMENTS_DIR, MemoFileHandler.DEFAULT_MEMO_FILE);
+		// Markdown file in workspace root for user editing
 		this.markdownFilePath = path.join(workspaceFolder.uri.fsPath, MemoFileHandler.MARKDOWN_FILE);
 	}
 
@@ -32,7 +33,7 @@ export class MemoFileHandler {
 		// Set up file watcher (even if file doesn't exist yet)
 		const pattern = new vscode.RelativePattern(
 			this.workspaceFolder,
-			MemoFileHandler.DEFAULT_MEMO_FILE,
+			path.join(MemoFileHandler.COMMENTS_DIR, MemoFileHandler.DEFAULT_MEMO_FILE),
 		);
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
 		

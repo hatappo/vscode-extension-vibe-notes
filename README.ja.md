@@ -20,15 +20,10 @@
 
 ## 保存場所
 
-コメントは`.comments/comments.local.txt`に保存されます。
+コメントデータは`.comments`フォルダ以下に保存されます。
 
 > [!IMPORTANT]
 > `.comments` ディレクトリを `.gitignore` に追加してください。
-
-```
-src/file.ts#L10 "TODO: この関数をリファクタリングする"
-src/file.ts#L20-25 "このロジックは見直しが必要"
-```
 
 ## コマンド
 

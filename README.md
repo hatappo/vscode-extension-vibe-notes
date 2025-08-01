@@ -20,15 +20,10 @@ Keep private code comments that live in the shadows - never touching your source
 
 ## Storage
 
-Comments are stored in `.comments/comments.local.txt`.
+Comment data is stored in the `.comments` folder.
 
 > [!IMPORTANT]
 > Add the `.comments` directory to your `.gitignore`.
-
-```
-src/file.ts#L10 "TODO: Refactor this function"
-src/file.ts#L20-25 "This logic needs review"
-```
 
 ## Commands
 
