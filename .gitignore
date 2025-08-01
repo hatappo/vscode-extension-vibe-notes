@@ -6,6 +6,6 @@ node_modules
 
 .DS_Store
 
-# Shadow Comments files and directories
-.comments.local.*
+# Shadow Comments
 .comments/
+.comments.local.md

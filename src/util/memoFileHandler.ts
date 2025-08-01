@@ -3,6 +3,7 @@ import * as path from "path";
 import { promises as fs } from "fs";
 import { parseReviewFileWithErrors, ReviewComment } from "./reviewCommentParser";
 import { parseMarkdownComments, applyMarkdownChanges, parseMarkdownToComments, ParsedComment } from "./markdownParser";
+import { promptGitignoreSetup } from "./gitignoreHelper";
 
 export class MemoFileHandler {
 	private static readonly COMMENTS_DIR = ".comments";
@@ -125,10 +126,12 @@ export class MemoFileHandler {
 
 			// Read existing content, or use empty string if file doesn't exist
 			let content = "";
+			let isFirstComment = false;
 			try {
 				content = await fs.readFile(this.memoFilePath, "utf8");
 			} catch {
 				// File doesn't exist yet, will be created
+				isFirstComment = true;
 			}
 
 			// Format the new comment with new format
@@ -141,6 +144,12 @@ export class MemoFileHandler {
 			await fs.writeFile(this.memoFilePath, newContent, "utf8");
 
 			vscode.window.showInformationMessage("Comment added successfully");
+			
+			// Prompt for .gitignore setup on first comment
+			if (isFirstComment) {
+				// Run async without waiting
+				promptGitignoreSetup(this.workspaceFolder);
+			}
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to add comment: ${error}`);
 		}

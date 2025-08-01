@@ -23,7 +23,15 @@ Keep private code comments that live in the shadows - never touching your source
 Comment data is stored in the `.comments` folder.
 
 > [!IMPORTANT]
-> Add the `.comments` directory to your `.gitignore`.
+> Add the `.comments` directory and `.comments.local.md` file to your `.gitignore`.
+
+```bash
+# Add to .gitignore
+echo "" >> .gitignore
+echo "# Shadow Comments" >> .gitignore
+echo ".comments/" >> .gitignore
+echo ".comments.local.md" >> .gitignore
+```
 
 ## Commands
 

@@ -9,6 +9,7 @@ import { MultiWorkspaceTreeProvider } from "./views/multiWorkspaceTreeProvider";
 import { ReviewComment } from "./util/reviewCommentParser";
 import { CommentCodeLensProvider } from "./providers/commentCodeLensProvider";
 import { TempFileManager } from "./util/tempFileManager";
+import { promptGitignoreSetup } from "./util/gitignoreHelper";
 
 // Global map to store temp file managers for cleanup on deactivate
 const tempFileManagers = new Map<string, TempFileManager>();
@@ -654,6 +655,17 @@ ${enhancedMarkdown}`;
 		}
 	});
 
+	// Command: Setup .gitignore
+	const setupGitignoreCommand = vscode.commands.registerCommand("shadow-comments.setupGitignore", async () => {
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			vscode.window.showErrorMessage("No workspace folder found");
+			return;
+		}
+
+		await promptGitignoreSetup(workspaceFolder);
+	});
+
 	// Register all commands
 	context.subscriptions.push(
 		addCommentCommand,
@@ -665,6 +677,7 @@ ${enhancedMarkdown}`;
 		deleteCommentAtLineCommand,
 		refreshTreeCommand,
 		saveToGitNotesCommand,
+		setupGitignoreCommand,
 	);
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(

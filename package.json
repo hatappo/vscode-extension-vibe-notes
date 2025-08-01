@@ -62,6 +62,11 @@
 				"command": "shadow-comments.saveToGitNotes",
 				"title": "Shadow Comments: Save to Git Notes",
 				"icon": "$(save)"
+			},
+			{
+				"command": "shadow-comments.setupGitignore",
+				"title": "Shadow Comments: Setup .gitignore",
+				"icon": "$(gear)"
 			}
 		],
 		"menus": {
@@ -97,6 +102,11 @@
 					"command": "shadow-comments.saveToGitNotes",
 					"when": "view == shadowCommentsView",
 					"group": "navigation@2"
+				},
+				{
+					"command": "shadow-comments.setupGitignore",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@3"
 				}
 			]
 		},

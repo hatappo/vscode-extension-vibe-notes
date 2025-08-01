@@ -23,7 +23,15 @@
 コメントデータは`.comments`フォルダ以下に保存されます。
 
 > [!IMPORTANT]
-> `.comments` ディレクトリを `.gitignore` に追加してください。
+> `.comments` ディレクトリと `.comments.local.md` ファイルを `.gitignore` に追加してください。
+
+```bash
+# .gitignoreに追加
+echo "" >> .gitignore
+echo "# Shadow Comments" >> .gitignore
+echo ".comments/" >> .gitignore
+echo ".comments.local.md" >> .gitignore
+```
 
 ## コマンド
 
