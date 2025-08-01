@@ -1,176 +1,175 @@
 {
-  "name": "shadow-comments",
-  "displayName": "Shadow Comments",
-  "description": "Keep private code comments that never touch your source files",
-  "publisher": "hatappo",
-  "version": "0.1.0",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hatappo/vscode-extension-shadow-comments"
-  },
-  "engines": {
-    "vscode": "^1.101.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "keywords": [
-    "comments",
-    "notes",
-    "git notes",
-    "code review",
-    "annotations",
-    "agentic coding",
-    "vibe coding",
-    "ai coding",
-    "private comments"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "shadow-comments.addComment",
-        "title": "Shadow Comments: Add Comment to Line"
-      },
-      {
-        "command": "shadow-comments.editCommentAtCursor",
-        "title": "Shadow Comments: Edit Comment"
-      },
-      {
-        "command": "shadow-comments.deleteCommentAtCursor",
-        "title": "Shadow Comments: Delete Comment"
-      },
-      {
-        "command": "shadow-comments.editCommentAtLine",
-        "title": "Shadow Comments: Edit Comment at Line"
-      },
-      {
-        "command": "shadow-comments.deleteCommentAtLine",
-        "title": "Shadow Comments: Delete Comment at Line"
-      },
-      {
-        "command": "shadow-comments.showMarkdown",
-        "title": "Shadow Comments: Show Comments as Markdown",
-        "icon": "$(markdown)"
-      },
-      {
-        "command": "shadow-comments.showJson",
-        "title": "Shadow Comments: Show Comments as JSON",
-        "icon": "$(json)"
-      },
-      {
-        "command": "shadow-comments.openCommentsFile",
-        "title": "Shadow Comments: Open Comments File",
-        "icon": "$(file-text)"
-      },
-      {
-        "command": "shadow-comments.refreshTree",
-        "title": "Shadow Comments: Refresh Comments",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "shadow-comments.saveToGitNotes",
-        "title": "Shadow Comments: Save to Git Notes",
-        "icon": "$(save)"
-      }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "command": "shadow-comments.addComment",
-          "group": "comments",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "shadow-comments.editCommentAtCursor",
-          "group": "comments",
-          "when": "editorTextFocus"
-        },
-        {
-          "command": "shadow-comments.deleteCommentAtCursor",
-          "group": "comments",
-          "when": "editorTextFocus"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "shadow-comments.refreshTree",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@0"
-        },
-        {
-          "command": "shadow-comments.openCommentsFile",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@1"
-        },
-        {
-          "command": "shadow-comments.showMarkdown",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "shadow-comments.showJson",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@3"
-        },
-        {
-          "command": "shadow-comments.saveToGitNotes",
-          "when": "view == shadowCommentsView",
-          "group": "navigation@4"
-        }
-      ]
-    },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "shadow-comments",
-          "title": "Shadow Comments",
-          "icon": "$(comment-discussion)"
-        }
-      ]
-    },
-    "views": {
-      "shadow-comments": [
-        {
-          "id": "shadowCommentsView",
-          "name": "",
-          "icon": "$(comment)",
-          "contextualTitle": "Shadow Comments"
-        }
-      ]
-    }
-  },
-  "scripts": {
-    "node": "node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning --loader ts-node/esm",
-    "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
-    "@types/vscode": "1.101.0",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2",
-    "esbuild": "^0.25.3",
-    "eslint": "^9.25.1",
-    "npm-run-all": "^4.1.5",
-    "ts-node": "10.9.2",
-    "typescript": "^5.8.3"
-  }
+	"name": "shadow-comments",
+	"displayName": "Shadow Comments",
+	"description": "Keep private code comments that never touch your source files",
+	"publisher": "hatappo",
+	"version": "0.1.0",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/hatappo/vscode-extension-shadow-comments"
+	},
+	"engines": {
+		"vscode": "^1.101.0"
+	},
+	"categories": ["Other"],
+	"keywords": [
+		"comments",
+		"notes",
+		"git notes",
+		"code review",
+		"annotations",
+		"agentic coding",
+		"vibe coding",
+		"ai coding",
+		"private comments"
+	],
+	"activationEvents": ["onStartupFinished"],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "shadow-comments.addComment",
+				"title": "Shadow Comments: Add Comment to Line"
+			},
+			{
+				"command": "shadow-comments.editCommentAtCursor",
+				"title": "Shadow Comments: Edit Comment"
+			},
+			{
+				"command": "shadow-comments.deleteCommentAtCursor",
+				"title": "Shadow Comments: Delete Comment"
+			},
+			{
+				"command": "shadow-comments.editCommentAtLine",
+				"title": "Shadow Comments: Edit Comment at Line"
+			},
+			{
+				"command": "shadow-comments.deleteCommentAtLine",
+				"title": "Shadow Comments: Delete Comment at Line"
+			},
+			{
+				"command": "shadow-comments.showMarkdown",
+				"title": "Shadow Comments: Show Comments as Markdown",
+				"icon": "$(markdown)"
+			},
+			{
+				"command": "shadow-comments.showJson",
+				"title": "Shadow Comments: Show Comments as JSON",
+				"icon": "$(json)"
+			},
+			{
+				"command": "shadow-comments.openCommentsFile",
+				"title": "Shadow Comments: Open Comments File",
+				"icon": "$(file-text)"
+			},
+			{
+				"command": "shadow-comments.refreshTree",
+				"title": "Shadow Comments: Refresh Comments",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "shadow-comments.saveToGitNotes",
+				"title": "Shadow Comments: Save to Git Notes",
+				"icon": "$(save)"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "shadow-comments.addComment",
+					"group": "",
+					"when": "editorTextFocus"
+				},
+				{
+					"command": "shadow-comments.editCommentAtCursor",
+					"group": "",
+					"when": "editorTextFocus"
+				},
+				{
+					"command": "shadow-comments.deleteCommentAtCursor",
+					"group": "",
+					"when": "editorTextFocus"
+				}
+			],
+			"view/title": [
+				{
+					"command": "shadow-comments.refreshTree",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@0"
+				},
+				{
+					"command": "shadow-comments.openCommentsFile",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@1"
+				},
+				{
+					"command": "shadow-comments.showMarkdown",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@2"
+				},
+				{
+					"command": "shadow-comments.showJson",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@3"
+				},
+				{
+					"command": "shadow-comments.saveToGitNotes",
+					"when": "view == shadowCommentsView",
+					"group": "navigation@4"
+				}
+			]
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "shadow-comments",
+					"title": "Shadow Comments",
+					"icon": "$(comment-discussion)"
+				}
+			]
+		},
+		"views": {
+			"shadow-comments": [
+				{
+					"id": "shadowCommentsView",
+					"name": "",
+					"icon": "$(comment)",
+					"contextualTitle": "Shadow Comments"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"node": "node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning --loader ts-node/esm",
+		"vscode:prepublish": "npm run package",
+		"compile": "npm run check-types && npm run lint && node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"package": "npm run check-types && npm run lint && node esbuild.js --production",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "npm run compile-tests && npm run compile && npm run lint",
+		"check-types": "tsc --noEmit",
+		"lint": "eslint src",
+		"test": "vscode-test",
+		"format": "biome format --write .",
+		"format:check": "biome format ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "20.x",
+		"@types/vscode": "1.101.0",
+		"@typescript-eslint/eslint-plugin": "^8.31.1",
+		"@typescript-eslint/parser": "^8.31.1",
+		"@vscode/test-cli": "^0.0.11",
+		"@vscode/test-electron": "^2.5.2",
+		"esbuild": "^0.25.3",
+		"eslint": "^9.25.1",
+		"npm-run-all": "^4.1.5",
+		"ts-node": "10.9.2",
+		"typescript": "^5.8.3"
+	}
 }
