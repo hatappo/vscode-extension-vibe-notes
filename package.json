@@ -50,7 +50,7 @@
 			},
 			{
 				"command": "shadow-comments.showMarkdown",
-				"title": "Shadow Comments: Open Comments as Markdown",
+				"title": "Shadow Comments: Open/Refresh Comments as Markdown",
 				"icon": "$(go-to-file)"
 			},
 			{
