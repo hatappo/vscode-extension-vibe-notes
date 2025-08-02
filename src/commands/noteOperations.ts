@@ -16,7 +16,7 @@ export async function editNote(
 	handler: NoteFileHandler,
 	workspaceFolder: vscode.WorkspaceFolder,
 	tempFileManagers: Map<string, TempFileManager>,
-	updateUIComponents: (workspaceFolder: vscode.WorkspaceFolder) => Promise<void>
+	updateUIComponents: (workspaceFolder: vscode.WorkspaceFolder) => Promise<void>,
 ): Promise<void> {
 	const tempFileManager = tempFileManagers.get(workspaceFolder.uri.fsPath);
 	if (!tempFileManager) {
@@ -73,7 +73,7 @@ export async function deleteNote(
 	note: Note,
 	handler: NoteFileHandler,
 	workspaceFolder: vscode.WorkspaceFolder,
-	updateUIComponents: (workspaceFolder: vscode.WorkspaceFolder) => Promise<void>
+	updateUIComponents: (workspaceFolder: vscode.WorkspaceFolder) => Promise<void>,
 ): Promise<void> {
 	// Confirm deletion
 	const confirmation = await vscode.window.showWarningMessage("Delete this note?", "Delete", "Cancel");

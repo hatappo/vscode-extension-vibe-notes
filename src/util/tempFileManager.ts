@@ -75,7 +75,7 @@ export class TempFileManager {
 					if (openTime && Date.now() - openTime < 1000) {
 						return;
 					}
-					
+
 					// Check if file still exists (wasn't saved and cleaned up)
 					try {
 						await fs.access(tempFilePath);
@@ -96,7 +96,7 @@ export class TempFileManager {
 			const visibilityListener = vscode.window.onDidChangeVisibleTextEditors(async () => {
 				// Check current visible editors directly instead of relying on event args
 				const isTempFileVisible = vscode.window.visibleTextEditors.some(
-					(editor) => editor.document.uri.fsPath === tempFilePath
+					(editor) => editor.document.uri.fsPath === tempFilePath,
 				);
 
 				if (!isTempFileVisible && this.tempFileCallbacks.has(tempFilePath)) {

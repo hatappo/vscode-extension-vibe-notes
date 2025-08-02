@@ -57,9 +57,7 @@ export async function findNoteAtCursor(noteHandlers: Map<string, NoteFileHandler
 	const currentLine = editor.selection.active.line + 1;
 
 	const notes = await handler.readNotes();
-	const note = notes.find(
-		(c) => c.filePath === relativePath && currentLine >= c.startLine && currentLine <= c.endLine,
-	);
+	const note = notes.find((c) => c.filePath === relativePath && currentLine >= c.startLine && currentLine <= c.endLine);
 
 	return { note, handler, workspaceFolder };
 }
@@ -74,7 +72,7 @@ export async function findNoteAtCursor(noteHandlers: Map<string, NoteFileHandler
 export async function findNoteAtLine(
 	uri: vscode.Uri,
 	line: number,
-	noteHandlers: Map<string, NoteFileHandler>
+	noteHandlers: Map<string, NoteFileHandler>,
 ): Promise<FindNoteResult> {
 	const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 	if (!workspaceFolder) {

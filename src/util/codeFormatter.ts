@@ -5,16 +5,16 @@
  */
 function calculateMinimumIndent(lines: string[]): number {
 	let minIndent = Infinity;
-	
+
 	for (const line of lines) {
 		const trimmedLine = line.trim();
 		if (trimmedLine.length > 0) {
 			// Count leading whitespace
 			let indent = 0;
 			for (const char of line) {
-				if (char === ' ') {
+				if (char === " ") {
 					indent += 1;
-				} else if (char === '\t') {
+				} else if (char === "\t") {
 					indent += 4;
 				} else {
 					break;
@@ -23,7 +23,7 @@ function calculateMinimumIndent(lines: string[]): number {
 			minIndent = Math.min(minIndent, indent);
 		}
 	}
-	
+
 	return minIndent === Infinity ? 0 : minIndent;
 }
 
@@ -37,22 +37,22 @@ function removeIndent(line: string, indentToRemove: number): string {
 	if (indentToRemove === 0 || line.trim().length === 0) {
 		return line;
 	}
-	
+
 	let removedCount = 0;
 	let i = 0;
-	
+
 	while (i < line.length && removedCount < indentToRemove) {
-		if (line[i] === ' ') {
+		if (line[i] === " ") {
 			removedCount += 1;
 			i += 1;
-		} else if (line[i] === '\t') {
+		} else if (line[i] === "\t") {
 			removedCount += 4;
 			i += 1;
 		} else {
 			break;
 		}
 	}
-	
+
 	return line.substring(i);
 }
 
@@ -65,18 +65,18 @@ function removeIndent(line: string, indentToRemove: number): string {
  */
 export function generateCodePreview(fileLines: string[], startLine: number, endLine: number): string[] {
 	const codePreviewLines: string[] = [];
-	
+
 	if (fileLines.length === 0) {
 		return codePreviewLines;
 	}
-	
+
 	const actualEndLine = Math.min(endLine, fileLines.length);
 	const maxLineNumWidth = actualEndLine.toString().length;
-	
+
 	// Collect target lines
 	const targetLines: { lineNum: number; content: string }[] = [];
 	const rawLines: string[] = [];
-	
+
 	for (let lineNum = startLine; lineNum <= actualEndLine; lineNum++) {
 		const content = fileLines[lineNum - 1];
 		if (content !== undefined) {
@@ -84,16 +84,16 @@ export function generateCodePreview(fileLines: string[], startLine: number, endL
 			rawLines.push(content);
 		}
 	}
-	
+
 	// Calculate minimum indent
 	const minIndent = calculateMinimumIndent(rawLines);
-	
+
 	// Process each line
 	for (const { lineNum, content } of targetLines) {
 		const processedLine = removeIndent(content, minIndent);
-		const paddedLineNum = lineNum.toString().padStart(maxLineNumWidth, ' ');
+		const paddedLineNum = lineNum.toString().padStart(maxLineNumWidth, " ");
 		codePreviewLines.push(`> ${paddedLineNum}: ${processedLine}`);
 	}
-	
+
 	return codePreviewLines;
 }

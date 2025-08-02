@@ -117,17 +117,13 @@ export class NoteDecorationProvider {
 	/**
 	 * Get comment at specific position
 	 */
-	async getNoteAtPosition(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-	): Promise<Note | undefined> {
+	async getNoteAtPosition(document: vscode.TextDocument, position: vscode.Position): Promise<Note | undefined> {
 		const relativePath = path.relative(this.workspaceFolder.uri.fsPath, document.uri.fsPath);
 		const notes = await this.noteHandler.getNotesForFile(document.uri.fsPath);
 		const lineNumber = position.line + 1; // Convert to 1-based
 
 		return notes.find(
-			(note) =>
-				note.filePath === relativePath && lineNumber >= note.startLine && lineNumber <= note.endLine,
+			(note) => note.filePath === relativePath && lineNumber >= note.startLine && lineNumber <= note.endLine,
 		);
 	}
 

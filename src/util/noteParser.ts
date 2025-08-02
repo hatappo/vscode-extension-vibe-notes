@@ -25,7 +25,6 @@ interface ParseError {
 // Matches: file.ts#L7 or file.ts#L7-9
 const noteLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
 
-
 /** Parse a single line note */
 function parseNote(line: string): Note | null {
 	const match = line.match(noteLineRegex);

@@ -19,7 +19,11 @@ export class NoteFileHandler {
 
 	constructor(private workspaceFolder: vscode.WorkspaceFolder) {
 		// Data file in .notes directory
-		this.noteFilePath = path.join(workspaceFolder.uri.fsPath, NoteFileHandler.NOTES_DIR, NoteFileHandler.DEFAULT_NOTE_FILE);
+		this.noteFilePath = path.join(
+			workspaceFolder.uri.fsPath,
+			NoteFileHandler.NOTES_DIR,
+			NoteFileHandler.DEFAULT_NOTE_FILE,
+		);
 		// Markdown file in workspace root for user editing
 		this.markdownFilePath = path.join(workspaceFolder.uri.fsPath, NoteFileHandler.MARKDOWN_FILE);
 	}
@@ -37,14 +41,11 @@ export class NoteFileHandler {
 			path.join(NoteFileHandler.NOTES_DIR, NoteFileHandler.DEFAULT_NOTE_FILE),
 		);
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(pattern);
-		
+
 		// Set up markdown file watcher
-		const markdownPattern = new vscode.RelativePattern(
-			this.workspaceFolder,
-			NoteFileHandler.MARKDOWN_FILE,
-		);
+		const markdownPattern = new vscode.RelativePattern(this.workspaceFolder, NoteFileHandler.MARKDOWN_FILE);
 		this.markdownWatcher = vscode.workspace.createFileSystemWatcher(markdownPattern);
-		
+
 		// Handle markdown file changes
 		this.markdownWatcher.onDidChange(async () => {
 			if (!this.isUpdatingFromMarkdown) {
@@ -114,12 +115,7 @@ export class NoteFileHandler {
 	/**
 	 * Add a new note to the note file
 	 */
-	async addNote(
-		filePath: string,
-		startLine: number,
-		endLine: number,
-		note: string,
-	): Promise<void> {
+	async addNote(filePath: string, startLine: number, endLine: number, note: string): Promise<void> {
 		try {
 			// Ensure notes directory exists
 			await this.ensureNotesDirectory();
@@ -144,7 +140,7 @@ export class NoteFileHandler {
 			await fs.writeFile(this.noteFilePath, newContent, "utf8");
 
 			vscode.window.showInformationMessage("Note added successfully");
-			
+
 			// Prompt for .gitignore setup on first note
 			if (isFirstNote) {
 				// Run async without waiting
@@ -166,10 +162,7 @@ export class NoteFileHandler {
 			// Find and replace the line
 			const updatedLines = lines.map((line) => {
 				if (line.trim() === oldNote.raw) {
-					const lineSpec = this.formatLineSpec(
-						oldNote.startLine,
-						oldNote.endLine,
-					);
+					const lineSpec = this.formatLineSpec(oldNote.startLine, oldNote.endLine);
 					const escapedNote = this.escapeNote(newNoteText);
 					return `${oldNote.filePath}#L${lineSpec} "${escapedNote}"`;
 				}
@@ -229,7 +222,7 @@ export class NoteFileHandler {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Replace all notes with new ones
 	 */
@@ -237,17 +230,16 @@ export class NoteFileHandler {
 		try {
 			// Build new file content
 			const lines: string[] = [];
-			
+
 			for (const note of newNotes) {
 				const lineSpec = this.formatLineSpec(note.startLine, note.endLine);
 				const escapedNote = this.escapeNote(note.comment);
 				lines.push(`${note.filePath}#L${lineSpec} "${escapedNote}"`);
 			}
-			
+
 			// Write to file
 			const content = lines.join("\n") + (lines.length > 0 ? "\n" : "");
 			await fs.writeFile(this.noteFilePath, content, "utf8");
-			
 		} catch (error) {
 			throw new Error(`Failed to replace notes: ${error}`);
 		}
@@ -265,40 +257,35 @@ export class NoteFileHandler {
 				// Markdown file doesn't exist, nothing to sync
 				return;
 			}
-			
+
 			// Read markdown file
 			const markdownContent = await fs.readFile(this.markdownFilePath, "utf8");
-			
+
 			// Parse markdown to get all notes
 			const { notes, errors } = parseMarkdownToNotes(markdownContent);
-			
+
 			// Check for errors
 			if (errors.length > 0) {
-				vscode.window.showErrorMessage(
-					`Failed to parse markdown: ${errors.length} error(s)\n${errors.join("\n")}`
-				);
+				vscode.window.showErrorMessage(`Failed to parse markdown: ${errors.length} error(s)\n${errors.join("\n")}`);
 				return;
 			}
-			
+
 			// Replace all notes
 			this.isUpdatingFromMarkdown = true;
 			try {
 				await this.replaceAllNotes(notes);
-				vscode.window.showInformationMessage(
-					`Updated notes from markdown: ${notes.length} note(s)`
-				);
-				
+				vscode.window.showInformationMessage(`Updated notes from markdown: ${notes.length} note(s)`);
+
 				// Emit event to update UI
 				this._onNotesChanged.fire();
 			} finally {
 				this.isUpdatingFromMarkdown = false;
 			}
-			
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to sync from markdown: ${error}`);
 		}
 	}
-	
+
 	/**
 	 * Get markdown file watcher
 	 */
