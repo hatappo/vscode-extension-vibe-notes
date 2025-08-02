@@ -6,11 +6,12 @@ import { spawn } from "child_process";
 import { NoteFileHandler } from "./util/noteFileHandler";
 import { NoteDecorationProvider } from "./decorations/noteDecorationProvider";
 import { MultiWorkspaceTreeProvider } from "./views/multiWorkspaceTreeProvider";
-import { Note } from "./util/noteParser";
 import { NoteCodeLensProvider } from "./providers/noteCodeLensProvider";
 import { TempFileManager } from "./util/tempFileManager";
 import { promptGitignoreSetup } from "./util/gitignoreHelper";
-import { generateCodePreview } from "./util/codeFormatter";
+import { generateMarkdownFileContent, generateEnhancedMarkdown } from "./util/markdownGenerator";
+import { getCurrentHandler, findNoteAtCursor, findNoteAtLine } from "./util/noteFinder";
+import { editNote, deleteNote } from "./commands/noteOperations";
 
 // Global map to store temp file managers for cleanup on deactivate
 const tempFileManagers = new Map<string, TempFileManager>();
@@ -99,246 +100,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(treeView);
 
 	// Get handler for current workspace
-	const getCurrentHandler = (): NoteFileHandler | undefined => {
-		const activeEditor = vscode.window.activeTextEditor;
-		if (!activeEditor) {
-			return undefined;
-		}
-
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
-		if (!workspaceFolder) {
-			return undefined;
-		}
-
-		return noteHandlers.get(workspaceFolder.uri.fsPath);
-	};
-
-	// Generate markdown file content
-	const generateMarkdownFileContent = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
-		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
-		const now = new Date().toLocaleString();
-		
-		return `> You can now fully edit this markdown file!
-> - Edit existing note content
-> - Add new notes
-> - Delete notes  
-> - Change line numbers
-> Save the file (Ctrl+S / Cmd+S) to apply all changes.
-
-Generated: ${now}
-
----
-
-# Vibe Notes
-
-${enhancedMarkdown}`;
-	};
-	
-	// Generate enhanced markdown with clickable links
-	const generateEnhancedMarkdown = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder, includeCode: boolean = true): Promise<string> => {
-		if (notes.length === 0) {
-			return "*No notes found*";
-		}
-
-		// Group by file path and sort
-		const groupedByFile = notes.reduce(
-			(acc, note) => {
-				if (!acc[note.filePath]) {
-					acc[note.filePath] = [];
-				}
-				acc[note.filePath].push(note);
-				return acc;
-			},
-			{} as Record<string, Note[]>,
-		);
-
-		// Sort file paths
-		const sortedFilePaths = Object.keys(groupedByFile).sort();
-
-		// Generate markdown
-		const markdownSections: string[] = [];
-
-		for (const filePath of sortedFilePaths) {
-			// Try to read the file content (only if includeCode is true)
-			let fileLines: string[] = [];
-			if (includeCode) {
-				try {
-					const fullPath = path.join(workspaceFolder.uri.fsPath, filePath);
-					const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(fullPath));
-					fileLines = Buffer.from(fileContent).toString('utf8').split('\n');
-				} catch (error) {
-					// File not found or unable to read, continue without code preview
-				}
-			}
-			
-			// File path header with clickable link (using relative path)
-			markdownSections.push(`## [${filePath}](${filePath})`);
-			markdownSections.push("");
-
-			// Sort notes by line number
-			const fileNotes = groupedByFile[filePath].sort((a, b) => a.startLine - b.startLine);
-
-			// Each note
-			for (const note of fileNotes) {
-				// Create line range text
-				const lineSpec = note.startLine === note.endLine 
-					? `L${note.startLine}`
-					: `L${note.startLine}-${note.endLine}`;
-
-				// Create clickable link to specific line (using relative path)
-				const lineLink = `${filePath}#L${note.startLine}`;
-				
-				// Line number as link
-				markdownSections.push(`### [${lineSpec}](${lineLink})`);
-				markdownSections.push("");
-				
-				// Code preview in quote block (only if includeCode is true)
-				if (includeCode && fileLines.length > 0) {
-					const codePreviewLines = generateCodePreview(fileLines, note.startLine, note.endLine);
-					if (codePreviewLines.length > 0) {
-						markdownSections.push(...codePreviewLines);
-						markdownSections.push("");
-					}
-				}
-				
-				markdownSections.push(note.comment);
-				markdownSections.push("");
-			}
-		}
-
-		// Remove the last empty line
-		if (markdownSections[markdownSections.length - 1] === "") {
-			markdownSections.pop();
-		}
-
-		return markdownSections.join("\n");
-	};
 
 
 
-	// Find note at current cursor position
-	const findNoteAtCursor = async (): Promise<{
-		note: Note | undefined;
-		handler: NoteFileHandler | undefined;
-		workspaceFolder: vscode.WorkspaceFolder | undefined;
-	}> => {
-		const editor = vscode.window.activeTextEditor;
-		if (!editor) {
-			return { note: undefined, handler: undefined, workspaceFolder: undefined };
-		}
 
-		const handler = getCurrentHandler();
-		if (!handler) {
-			vscode.window.showErrorMessage("No workspace folder found");
-			return { note: undefined, handler: undefined, workspaceFolder: undefined };
-		}
 
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-		if (!workspaceFolder) {
-			return { note: undefined, handler: undefined, workspaceFolder: undefined };
-		}
 
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
-		const currentLine = editor.selection.active.line + 1;
-
-		const notes = await handler.readNotes();
-		const note = notes.find(
-			(c) => c.filePath === relativePath && currentLine >= c.startLine && currentLine <= c.endLine,
-		);
-
-		return { note, handler, workspaceFolder };
-	};
-
-	// Common function to edit a note
-	const editNote = async (
-		note: Note,
-		handler: NoteFileHandler,
-		workspaceFolder: vscode.WorkspaceFolder,
-	): Promise<void> => {
-		const tempFileManager = tempFileManagers.get(workspaceFolder.uri.fsPath);
-		if (!tempFileManager) {
-			vscode.window.showErrorMessage("Temp file manager not found");
-			return;
-		}
-
-		// Create header for the temp file
-		const header = `# Edit Vibe Note
-# File: ${note.filePath}
-# Line: ${note.startLine === note.endLine ? note.startLine : `${note.startLine}-${note.endLine}`}
-# 
-# Edit your note below and save the file (Ctrl+S / Cmd+S).
-# Close without saving to cancel.
-# ========================================
-
-`;
-
-		// Open temp file for note editing
-		await tempFileManager.openTempFile("EditNote", header + note.comment, async (content) => {
-			if (content === null) {
-				return;
-			}
-
-			// Extract note text (remove header)
-			const lines = content.split("\n");
-			const separatorIndex = lines.findIndex((line) => line.includes("========================================"));
-
-			if (separatorIndex === -1 || separatorIndex >= lines.length - 1) {
-				return;
-			}
-
-			const noteLines = lines.slice(separatorIndex + 1);
-			const newNote = noteLines.join("\n").trim();
-
-			if (!newNote || newNote === note.comment) {
-				return;
-			}
-
-			await handler.updateNote(note, newNote);
-			await updateUIComponents(workspaceFolder);
-			vscode.window.showInformationMessage("Note updated successfully");
-		});
-	};
-
-	// Common function to delete a note
-	const deleteNote = async (
-		note: Note,
-		handler: NoteFileHandler,
-		workspaceFolder: vscode.WorkspaceFolder,
-	): Promise<void> => {
-		// Confirm deletion
-		const confirmation = await vscode.window.showWarningMessage("Delete this note?", "Delete", "Cancel");
-
-		if (confirmation === "Delete") {
-			await handler.deleteNote(note);
-			await updateUIComponents(workspaceFolder);
-		}
-	};
-
-	// Common function to find note at specific line
-	const findNoteAtLine = async (
-		uri: vscode.Uri,
-		line: number,
-	): Promise<{
-		note: Note | undefined;
-		handler: NoteFileHandler | undefined;
-		workspaceFolder: vscode.WorkspaceFolder | undefined;
-	}> => {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-		if (!workspaceFolder) {
-			return { note: undefined, handler: undefined, workspaceFolder: undefined };
-		}
-
-		const handler = noteHandlers.get(workspaceFolder.uri.fsPath);
-		if (!handler) {
-			return { note: undefined, handler: undefined, workspaceFolder: undefined };
-		}
-
-		const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath);
-		const notes = await handler.readNotes();
-		const note = notes.find((c) => c.filePath === relativePath && line >= c.startLine && line <= c.endLine);
-
-		return { note, handler, workspaceFolder };
-	};
 
 	// Command: Add note to line
 	const addNoteCommand = vscode.commands.registerCommand("vibe-notes.addNote", async () => {
@@ -348,7 +115,7 @@ ${enhancedMarkdown}`;
 			return;
 		}
 
-		const handler = getCurrentHandler();
+		const handler = getCurrentHandler(noteHandlers);
 		if (!handler) {
 			vscode.window.showErrorMessage("No workspace folder found");
 			return;
@@ -484,7 +251,7 @@ ${enhancedMarkdown}`;
 	const editNoteAtCursorCommand = vscode.commands.registerCommand(
 		"vibe-notes.editNoteAtCursor",
 		async () => {
-			const { note, handler, workspaceFolder } = await findNoteAtCursor();
+			const { note, handler, workspaceFolder } = await findNoteAtCursor(noteHandlers);
 
 			if (!note || !handler || !workspaceFolder) {
 				if (note === undefined && handler && workspaceFolder) {
@@ -493,7 +260,7 @@ ${enhancedMarkdown}`;
 				return;
 			}
 
-			await editNote(note, handler, workspaceFolder);
+			await editNote(note, handler, workspaceFolder, tempFileManagers, updateUIComponents);
 		},
 	);
 
@@ -501,7 +268,7 @@ ${enhancedMarkdown}`;
 	const deleteNoteAtCursorCommand = vscode.commands.registerCommand(
 		"vibe-notes.deleteNoteAtCursor",
 		async () => {
-			const { note, handler, workspaceFolder } = await findNoteAtCursor();
+			const { note, handler, workspaceFolder } = await findNoteAtCursor(noteHandlers);
 
 			if (!note || !handler || !workspaceFolder) {
 				if (note === undefined && handler && workspaceFolder) {
@@ -510,7 +277,7 @@ ${enhancedMarkdown}`;
 				return;
 			}
 
-			await deleteNote(note, handler, workspaceFolder);
+			await deleteNote(note, handler, workspaceFolder, updateUIComponents);
 		},
 	);
 
@@ -518,9 +285,9 @@ ${enhancedMarkdown}`;
 	const editNoteAtLineCommand = vscode.commands.registerCommand(
 		"vibe-notes.editNoteAtLine",
 		async (uri: vscode.Uri, line: number) => {
-			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line);
+			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line, noteHandlers);
 			if (note && handler && workspaceFolder) {
-				await editNote(note, handler, workspaceFolder);
+				await editNote(note, handler, workspaceFolder, tempFileManagers, updateUIComponents);
 			}
 		},
 	);
@@ -529,9 +296,9 @@ ${enhancedMarkdown}`;
 	const deleteNoteAtLineCommand = vscode.commands.registerCommand(
 		"vibe-notes.deleteNoteAtLine",
 		async (uri: vscode.Uri, line: number) => {
-			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line);
+			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line, noteHandlers);
 			if (note && handler && workspaceFolder) {
-				await deleteNote(note, handler, workspaceFolder);
+				await deleteNote(note, handler, workspaceFolder, updateUIComponents);
 			}
 		},
 	);
