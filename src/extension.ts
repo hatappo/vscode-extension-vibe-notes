@@ -10,6 +10,7 @@ import { Note } from "./util/noteParser";
 import { NoteCodeLensProvider } from "./providers/noteCodeLensProvider";
 import { TempFileManager } from "./util/tempFileManager";
 import { promptGitignoreSetup } from "./util/gitignoreHelper";
+import { generateCodePreview } from "./util/codeFormatter";
 
 // Global map to store temp file managers for cleanup on deactivate
 const tempFileManagers = new Map<string, TempFileManager>();
@@ -182,21 +183,7 @@ ${enhancedMarkdown}`;
 					: `L${note.startLine}-${note.endLine}`;
 
 				// Get code content for all lines in the range
-				const codePreviewLines: string[] = [];
-				if (fileLines.length > 0) {
-					const endLine = Math.min(note.endLine, fileLines.length);
-					// Calculate padding width based on the last line number
-					const maxLineNumWidth = endLine.toString().length;
-					
-					for (let lineNum = note.startLine; lineNum <= endLine; lineNum++) {
-						const codeLine = fileLines[lineNum - 1];
-						if (codeLine !== undefined) {
-							// Pad line number to match the width of the last line number
-							const paddedLineNum = lineNum.toString().padStart(maxLineNumWidth, ' ');
-							codePreviewLines.push(`> ${paddedLineNum}: ${codeLine}`);
-						}
-					}
-				}
+				const codePreviewLines = generateCodePreview(fileLines, note.startLine, note.endLine);
 
 				// Create clickable link to specific line (using relative path)
 				const lineLink = `${filePath}#L${note.startLine}`;
