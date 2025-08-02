@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { Note } from "../util/noteParser";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { Note } from "../notes/NoteParser";
 
 interface WorkspaceNotes {
 	workspaceFolder: vscode.WorkspaceFolder;

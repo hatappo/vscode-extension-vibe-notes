@@ -4,6 +4,7 @@ import * as fs from "fs/promises";
 
 export class TempFileManager {
 	private static readonly TEMP_DIR = ".notes/tmp";
+	private static readonly PREMATURE_CLOSE_THRESHOLD_MS = 1000;
 	private tempFileWatchers: Map<string, vscode.Disposable[]> = new Map();
 	private tempFileCallbacks: Map<string, (content: string | null) => Promise<void>> = new Map();
 	private tempFileOpenTimes: Map<string, number> = new Map();
@@ -70,9 +71,9 @@ export class TempFileManager {
 			// Listen for close events
 			const closeListener = vscode.workspace.onDidCloseTextDocument(async (closedDoc) => {
 				if (closedDoc.uri.fsPath === tempFilePath) {
-					// Check if this is a premature close (within 1 second of opening)
+					// Check if this is a premature close (within threshold of opening)
 					const openTime = this.tempFileOpenTimes.get(tempFilePath);
-					if (openTime && Date.now() - openTime < 1000) {
+					if (openTime && Date.now() - openTime < TempFileManager.PREMATURE_CLOSE_THRESHOLD_MS) {
 						return;
 					}
 

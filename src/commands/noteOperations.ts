@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { Note } from "../util/noteParser";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { TempFileManager } from "../util/tempFileManager";
+import { Note } from "../notes/NoteParser";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { TempFileManager } from "../workspace/TempFileManager";
 
 /**
  * Edit a note using a temporary file

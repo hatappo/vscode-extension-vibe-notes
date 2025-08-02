@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { Note } from "./noteParser";
-import { NoteFileHandler } from "./noteFileHandler";
+import { Note } from "./NoteParser";
+import { NoteFileHandler } from "./NoteFileHandler";
 
 /**
  * Result type for note finding operations
@@ -89,4 +89,34 @@ export async function findNoteAtLine(
 	const note = notes.find((c) => c.filePath === relativePath && line >= c.startLine && line <= c.endLine);
 
 	return { note, handler, workspaceFolder };
+}
+
+/**
+ * Get handler and workspace folder, trying active editor first, then first workspace
+ * @param noteHandlers Map of workspace paths to NoteFileHandlers
+ * @returns Handler and workspace folder
+ */
+export function getHandlerWithWorkspace(noteHandlers: Map<string, NoteFileHandler>): {
+	handler: NoteFileHandler | undefined;
+	workspaceFolder: vscode.WorkspaceFolder | undefined;
+} {
+	let workspaceFolder: vscode.WorkspaceFolder | undefined;
+	let handler: NoteFileHandler | undefined;
+
+	// First try to get based on active editor
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+		if (workspaceFolder) {
+			handler = noteHandlers.get(workspaceFolder.uri.fsPath);
+		}
+	}
+
+	// If no active editor, use first workspace
+	if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+		workspaceFolder = vscode.workspace.workspaceFolders[0];
+		handler = noteHandlers.get(workspaceFolder.uri.fsPath);
+	}
+
+	return { handler, workspaceFolder };
 }

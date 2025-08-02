@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { Note } from "../util/noteParser";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { Note } from "../notes/NoteParser";
 
-export class NoteDecorationProvider {
+export class NoteDecorationManager {
 	private gutterDecorationType: vscode.TextEditorDecorationType;
 	private inlineDecorationTypes = new Map<string, vscode.TextEditorDecorationType>();
 	private decorations = new Map<string, vscode.DecorationOptions[]>();

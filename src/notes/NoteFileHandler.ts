@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
-import { parseNoteFileWithErrors, Note } from "./noteParser";
-import { parseMarkdownToNotes, ParsedNote } from "./markdownParser";
-import { promptGitignoreSetup } from "./gitignoreHelper";
+import { parseNoteFileWithErrors, Note } from "./NoteParser";
+import { parseMarkdownToNotes, ParsedNote } from "../formatting/MarkdownParser";
+import { promptGitignoreSetup } from "../workspace/GitignoreHelper";
 
 export class NoteFileHandler {
 	private static readonly NOTES_DIR = ".notes";

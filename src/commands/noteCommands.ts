@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { TempFileManager } from "../util/tempFileManager";
-import { getCurrentHandler, findNoteAtCursor, findNoteAtLine } from "../util/noteFinder";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { TempFileManager } from "../workspace/TempFileManager";
+import { getCurrentHandler, findNoteAtCursor, findNoteAtLine } from "../notes/NoteFinder";
 import { editNote, deleteNote } from "./noteOperations";
 
 /**

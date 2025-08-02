@@ -1,24 +1,26 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { NoteFileHandler } from "./util/noteFileHandler";
-import { NoteDecorationProvider } from "./decorations/noteDecorationProvider";
-import { MultiWorkspaceTreeProvider } from "./views/multiWorkspaceTreeProvider";
-import { NoteCodeLensProvider } from "./providers/noteCodeLensProvider";
-import { TempFileManager } from "./util/tempFileManager";
+import { NoteFileHandler } from "./notes/NoteFileHandler";
+import { NoteDecorationManager } from "./ui/NoteDecorationManager";
+import { MultiWorkspaceTreeProvider } from "./ui/MultiWorkspaceTreeProvider";
+import { NoteCodeLensProvider } from "./ui/NoteCodeLensProvider";
+import { TempFileManager } from "./workspace/TempFileManager";
 import { registerNoteCommands } from "./commands/noteCommands";
 import { registerViewCommands } from "./commands/viewCommands";
 import { registerIntegrationCommands } from "./commands/integrationCommands";
 
-// Global map to store temp file managers for cleanup on deactivate
+// Global map to store temp file managers
 const tempFileManagers = new Map<string, TempFileManager>();
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
+	// ===== 1/3 Initialize resources and providers =====
+
 	// Initialize note file handlers and decoration providers for each workspace
 	const noteHandlers = new Map<string, NoteFileHandler>();
-	const decorationProviders = new Map<string, NoteDecorationProvider>();
+	const decorationProviders = new Map<string, NoteDecorationManager>();
 	const codeLensProviders = new Map<string, NoteCodeLensProvider>();
 
 	// Create a single tree provider for all workspaces
@@ -48,10 +50,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		const handler = new NoteFileHandler(folder);
 		await handler.initialize();
 		noteHandlers.set(folder.uri.fsPath, handler);
+		context.subscriptions.push(handler);
 
 		// Create decoration provider
-		const decorationProvider = new NoteDecorationProvider(handler, folder);
+		const decorationProvider = new NoteDecorationManager(handler, folder);
 		decorationProviders.set(folder.uri.fsPath, decorationProvider);
+		context.subscriptions.push(decorationProvider);
 
 		// Create CodeLens provider
 		const codeLensProvider = new NoteCodeLensProvider(handler, folder);
@@ -60,6 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Create temp file manager
 		const tempFileManager = new TempFileManager(folder.uri.fsPath);
 		tempFileManagers.set(folder.uri.fsPath, tempFileManager);
+		context.subscriptions.push(tempFileManager);
 
 		// Register CodeLens provider
 		const codeLensDisposable = vscode.languages.registerCodeLensProvider(
@@ -96,12 +101,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(treeView);
 
-	// Get handler for current workspace
+	// ===== 2/3 Register commands =====
 
 	// Register all commands
 	registerNoteCommands(context, noteHandlers, tempFileManagers, updateUIComponents);
 	registerViewCommands(context, noteHandlers, treeProvider);
 	registerIntegrationCommands(context, noteHandlers);
+
+	// ===== 3/3 Setup event listeners =====
+
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(
 		vscode.window.onDidChangeVisibleTextEditors(() => {
@@ -131,24 +139,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			decorationProvider.applyDecorationsToEditor(editor);
 		}),
 	);
-
-	// Clean up handlers on deactivation
-	context.subscriptions.push({
-		dispose: () => {
-			noteHandlers.forEach((handler) => {
-				handler.dispose();
-			});
-			decorationProviders.forEach((decorationProvider) => {
-				decorationProvider.dispose();
-			});
-		},
-	});
 }
 
 // This method is called when your extension is deactivated
 export async function deactivate() {
-	// Clean up all temp file managers
-	for (const [_, tempFileManager] of tempFileManagers) {
-		await tempFileManager.dispose();
-	}
+	// Cleanup is handled automatically via context.subscriptions
 }

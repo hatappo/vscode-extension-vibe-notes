@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { Note } from "./noteParser";
-import { generateCodePreview } from "./codeFormatter";
+import { Note } from "../notes/NoteParser";
+import { generateCodePreview } from "./CodeFormatter";
 
 /**
  * Generate markdown file content with header and instructions

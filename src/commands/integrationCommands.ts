@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { spawn } from "child_process";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { promptGitignoreSetup } from "../util/gitignoreHelper";
-import { generateEnhancedMarkdown } from "../util/markdownGenerator";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { promptGitignoreSetup } from "../workspace/GitignoreHelper";
+import { generateEnhancedMarkdown } from "../formatting/MarkdownGenerator";
+import { getHandlerWithWorkspace } from "../notes/NoteFinder";
 
 /**
  * Register all integration-related commands (Git, LLM, etc.)
@@ -110,23 +111,7 @@ export function registerIntegrationCommands(
 	// Command: Copy for LLM Agent
 	const copyForLLMCommand = vscode.commands.registerCommand("vibe-notes.copyForLLM", async () => {
 		// Get handler and workspace folder
-		let workspaceFolder: vscode.WorkspaceFolder | undefined;
-		let handler: NoteFileHandler | undefined;
-
-		// First try to get based on active editor
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-			if (workspaceFolder) {
-				handler = noteHandlers.get(workspaceFolder.uri.fsPath);
-			}
-		}
-
-		// If no active editor, use first workspace
-		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-			workspaceFolder = vscode.workspace.workspaceFolders[0];
-			handler = noteHandlers.get(workspaceFolder.uri.fsPath);
-		}
+		const { handler, workspaceFolder } = getHandlerWithWorkspace(noteHandlers);
 
 		if (!handler || !workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");

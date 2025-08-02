@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { MultiWorkspaceTreeProvider } from "../views/multiWorkspaceTreeProvider";
-import { generateMarkdownFileContent } from "../util/markdownGenerator";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { MultiWorkspaceTreeProvider } from "../ui/MultiWorkspaceTreeProvider";
+import { generateMarkdownFileContent } from "../formatting/MarkdownGenerator";
+import { getHandlerWithWorkspace } from "../notes/NoteFinder";
 
 /**
  * Register all view-related commands
@@ -14,24 +15,8 @@ export function registerViewCommands(
 ) {
 	// Command: Open as markdown (temporary file)
 	const showMarkdownCommand = vscode.commands.registerCommand("vibe-notes.showMarkdown", async () => {
-		// Get handler and workspace folder for copy operation
-		let workspaceFolder: vscode.WorkspaceFolder | undefined;
-		let handler: NoteFileHandler | undefined;
-
-		// First try to get based on active editor
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-			if (workspaceFolder) {
-				handler = noteHandlers.get(workspaceFolder.uri.fsPath);
-			}
-		}
-
-		// If no active editor, use first workspace
-		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-			workspaceFolder = vscode.workspace.workspaceFolders[0];
-			handler = noteHandlers.get(workspaceFolder.uri.fsPath);
-		}
+		// Get handler and workspace folder
+		const { handler, workspaceFolder } = getHandlerWithWorkspace(noteHandlers);
 
 		if (!handler || !workspaceFolder) {
 			vscode.window.showErrorMessage("No workspace folder found");
