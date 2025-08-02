@@ -59,13 +59,18 @@
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "Save to Git Notes",
-				"icon": "$(save)"
+				"title": "Save to git notes",
+				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "Setup .gitignore",
-				"icon": "$(gear)"
+				"title": "Setup gitignore",
+				"icon": "$(heart)"
+			},
+			{
+				"command": "vibe-notes.copyForLLM",
+				"title": "Copy for AI/LLM",
+				"icon": "$(robot)"
 			}
 		],
 		"menus": {
@@ -93,19 +98,24 @@
 					"group": "navigation@0"
 				},
 				{
-					"command": "vibe-notes.showMarkdown",
+					"command": "vibe-notes.copyForLLM",
 					"when": "view == vibeNotesView",
 					"group": "navigation@1"
 				},
 				{
-					"command": "vibe-notes.saveToGitNotes",
+					"command": "vibe-notes.showMarkdown",
 					"when": "view == vibeNotesView",
 					"group": "navigation@2"
 				},
 				{
-					"command": "vibe-notes.setupGitignore",
+					"command": "vibe-notes.saveToGitNotes",
 					"when": "view == vibeNotesView",
 					"group": "navigation@3"
+				},
+				{
+					"command": "vibe-notes.setupGitignore",
+					"when": "view == vibeNotesView",
+					"group": "navigation@4"
 				}
 			]
 		},

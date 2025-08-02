@@ -674,6 +674,50 @@ ${enhancedMarkdown}`;
 		await promptGitignoreSetup(workspaceFolder);
 	});
 
+	// Command: Copy for LLM Agent
+	const copyForLLMCommand = vscode.commands.registerCommand("vibe-notes.copyForLLM", async () => {
+		// Get handler and workspace folder
+		let workspaceFolder: vscode.WorkspaceFolder | undefined;
+		let handler: NoteFileHandler | undefined;
+
+		// First try to get based on active editor
+		const editor = vscode.window.activeTextEditor;
+		if (editor) {
+			workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+			if (workspaceFolder) {
+				handler = noteHandlers.get(workspaceFolder.uri.fsPath);
+			}
+		}
+
+		// If no active editor, use first workspace
+		if (!handler && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+			workspaceFolder = vscode.workspace.workspaceFolders[0];
+			handler = noteHandlers.get(workspaceFolder.uri.fsPath);
+		}
+
+		if (!handler || !workspaceFolder) {
+			vscode.window.showErrorMessage("No workspace folder found");
+			return;
+		}
+
+		// Get all notes
+		const notes = await handler.readNotes();
+		if (notes.length === 0) {
+			vscode.window.showInformationMessage("No notes found");
+			return;
+		}
+
+		// Generate enhanced markdown content for LLM
+		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
+		
+		// Add instruction for LLM at the beginning
+		const llmContent = `Please review and implement the following code feedback:\n\n${enhancedMarkdown}`;
+		
+		// Copy to clipboard
+		await vscode.env.clipboard.writeText(llmContent);
+		vscode.window.showInformationMessage(`Copied ${notes.length} notes for LLM Agent`);
+	});
+
 	// Register all commands
 	context.subscriptions.push(
 		addNoteCommand,
@@ -686,6 +730,7 @@ ${enhancedMarkdown}`;
 		refreshTreeCommand,
 		saveToGitNotesCommand,
 		setupGitignoreCommand,
+		copyForLLMCommand,
 	);
 	// Update decorations when editor becomes visible
 	context.subscriptions.push(
