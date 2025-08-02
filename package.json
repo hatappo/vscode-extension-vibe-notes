@@ -146,6 +146,12 @@
 					"default": "Please review and implement the following code feedback:",
 					"description": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.",
 					"markdownDescription": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.\n\n**Default:** `Please review and implement the following code feedback:`\n\n**Note:** To restore the default value, edit settings.json and remove this property or set it to `undefined`."
+				},
+				"vibe-notes.copyForLLMIncludeCode": {
+					"type": "boolean",
+					"default": true,
+					"description": "Include code snippets when copying notes for AI/LLM. Disable to reduce token usage.",
+					"markdownDescription": "Include code snippets when copying notes for AI/LLM.\n\n**When enabled:** Notes include the actual code being referenced, providing full context.\n\n**When disabled:** Only note comments are included, reducing token usage."
 				}
 			}
 		}

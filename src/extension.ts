@@ -135,7 +135,7 @@ ${enhancedMarkdown}`;
 	};
 	
 	// Generate enhanced markdown with clickable links
-	const generateEnhancedMarkdown = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder): Promise<string> => {
+	const generateEnhancedMarkdown = async (notes: Note[], workspaceFolder: vscode.WorkspaceFolder, includeCode: boolean = true): Promise<string> => {
 		if (notes.length === 0) {
 			return "*No notes found*";
 		}
@@ -159,15 +159,18 @@ ${enhancedMarkdown}`;
 		const markdownSections: string[] = [];
 
 		for (const filePath of sortedFilePaths) {
-			// Try to read the file content
+			// Try to read the file content (only if includeCode is true)
 			let fileLines: string[] = [];
-			try {
-				const fullPath = path.join(workspaceFolder.uri.fsPath, filePath);
-				const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(fullPath));
-				fileLines = Buffer.from(fileContent).toString('utf8').split('\n');
-			} catch (error) {
-				// File not found or unable to read, continue without code preview
+			if (includeCode) {
+				try {
+					const fullPath = path.join(workspaceFolder.uri.fsPath, filePath);
+					const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(fullPath));
+					fileLines = Buffer.from(fileContent).toString('utf8').split('\n');
+				} catch (error) {
+					// File not found or unable to read, continue without code preview
+				}
 			}
+			
 			// File path header with clickable link (using relative path)
 			markdownSections.push(`## [${filePath}](${filePath})`);
 			markdownSections.push("");
@@ -182,9 +185,6 @@ ${enhancedMarkdown}`;
 					? `L${note.startLine}`
 					: `L${note.startLine}-${note.endLine}`;
 
-				// Get code content for all lines in the range
-				const codePreviewLines = generateCodePreview(fileLines, note.startLine, note.endLine);
-
 				// Create clickable link to specific line (using relative path)
 				const lineLink = `${filePath}#L${note.startLine}`;
 				
@@ -192,10 +192,13 @@ ${enhancedMarkdown}`;
 				markdownSections.push(`### [${lineSpec}](${lineLink})`);
 				markdownSections.push("");
 				
-				// Code preview in quote block
-				if (codePreviewLines.length > 0) {
-					markdownSections.push(...codePreviewLines);
-					markdownSections.push("");
+				// Code preview in quote block (only if includeCode is true)
+				if (includeCode && fileLines.length > 0) {
+					const codePreviewLines = generateCodePreview(fileLines, note.startLine, note.endLine);
+					if (codePreviewLines.length > 0) {
+						markdownSections.push(...codePreviewLines);
+						markdownSections.push("");
+					}
 				}
 				
 				markdownSections.push(note.comment);
@@ -694,12 +697,13 @@ ${enhancedMarkdown}`;
 			return;
 		}
 
-		// Generate enhanced markdown content for LLM
-		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
-		
-		// Get user's configured prompt (defaults to value in package.json if not set)
+		// Get user's configuration
 		const config = vscode.workspace.getConfiguration('vibe-notes');
+		const includeCode = config.get<boolean>('copyForLLMIncludeCode');
 		const prompt = config.get<string>('copyForLLMPrompt');
+		
+		// Generate enhanced markdown content for LLM
+		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder, includeCode);
 		
 		// Add prompt only if not empty
 		const llmContent = prompt ? `${prompt}\n\n${enhancedMarkdown}` : enhancedMarkdown;
