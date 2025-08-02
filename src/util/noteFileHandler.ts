@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { promises as fs } from "fs";
 import { parseNoteFileWithErrors, Note } from "./noteParser";
-import { parseMarkdownNotes, applyMarkdownChanges, parseMarkdownToNotes, ParsedNote } from "./markdownParser";
+import { parseMarkdownToNotes, ParsedNote } from "./markdownParser";
 import { promptGitignoreSetup } from "./gitignoreHelper";
 
 export class NoteFileHandler {
