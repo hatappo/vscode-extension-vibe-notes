@@ -137,6 +137,17 @@
 					"contextualTitle": "Vibe Notes"
 				}
 			]
+		},
+		"configuration": {
+			"title": "Vibe Notes",
+			"properties": {
+				"vibe-notes.copyForLLMPrompt": {
+					"type": "string",
+					"default": "Please review and implement the following code feedback:",
+					"description": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.",
+					"markdownDescription": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.\n\n**Default:** `Please review and implement the following code feedback:`\n\n**Note:** To restore the default value, edit settings.json and remove this property or set it to `undefined`."
+				}
+			}
 		}
 	},
 	"scripts": {

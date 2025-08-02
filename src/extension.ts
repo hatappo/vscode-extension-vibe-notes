@@ -697,8 +697,12 @@ ${enhancedMarkdown}`;
 		// Generate enhanced markdown content for LLM
 		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
 		
-		// Add instruction for LLM at the beginning
-		const llmContent = `Please review and implement the following code feedback:\n\n${enhancedMarkdown}`;
+		// Get user's configured prompt (defaults to value in package.json if not set)
+		const config = vscode.workspace.getConfiguration('vibe-notes');
+		const prompt = config.get<string>('copyForLLMPrompt');
+		
+		// Add prompt only if not empty
+		const llmContent = prompt ? `${prompt}\n\n${enhancedMarkdown}` : enhancedMarkdown;
 		
 		// Copy to clipboard
 		await vscode.env.clipboard.writeText(llmContent);
