@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { Note } from "../util/noteParser";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { Note } from "../notes/NoteParser";
 
 export class NoteCodeLensProvider implements vscode.CodeLensProvider {
 	private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();

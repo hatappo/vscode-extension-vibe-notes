@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { NoteFileHandler } from "../util/noteFileHandler";
-import { Note } from "../util/noteParser";
+import { NoteFileHandler } from "../notes/NoteFileHandler";
+import { Note } from "../notes/NoteParser";
 
-export class NoteDecorationProvider {
+export class NoteDecorationManager {
 	private gutterDecorationType: vscode.TextEditorDecorationType;
 	private inlineDecorationTypes = new Map<string, vscode.TextEditorDecorationType>();
 	private decorations = new Map<string, vscode.DecorationOptions[]>();
@@ -117,17 +117,13 @@ export class NoteDecorationProvider {
 	/**
 	 * Get comment at specific position
 	 */
-	async getNoteAtPosition(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-	): Promise<Note | undefined> {
+	async getNoteAtPosition(document: vscode.TextDocument, position: vscode.Position): Promise<Note | undefined> {
 		const relativePath = path.relative(this.workspaceFolder.uri.fsPath, document.uri.fsPath);
 		const notes = await this.noteHandler.getNotesForFile(document.uri.fsPath);
 		const lineNumber = position.line + 1; // Convert to 1-based
 
 		return notes.find(
-			(note) =>
-				note.filePath === relativePath && lineNumber >= note.startLine && lineNumber <= note.endLine,
+			(note) => note.filePath === relativePath && lineNumber >= note.startLine && lineNumber <= note.endLine,
 		);
 	}
 
