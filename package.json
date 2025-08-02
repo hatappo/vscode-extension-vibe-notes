@@ -1,7 +1,7 @@
 {
 	"name": "vibe-notes",
-	"displayName": "Vibe Notes",
-	"description": "Private code notes that vibe with your workflow",
+	"displayName": "%extension.displayName%",
+	"description": "%extension.description%",
 	"publisher": "hatappo",
 	"version": "0.1.0",
 	"license": "MIT",
@@ -29,43 +29,48 @@
 		"commands": [
 			{
 				"command": "vibe-notes.addNote",
-				"title": "Vibe Notes: Add Note to Line"
+				"title": "%command.addNote%"
 			},
 			{
 				"command": "vibe-notes.editNoteAtCursor",
-				"title": "Vibe Notes: Edit Note"
+				"title": "%command.editNoteAtCursor%"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtCursor",
-				"title": "Vibe Notes: Delete Note"
+				"title": "%command.deleteNoteAtCursor%"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLine",
-				"title": "Vibe Notes: Edit Note at Line"
+				"title": "%command.editNoteAtLine%"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtLine",
-				"title": "Vibe Notes: Delete Note at Line"
+				"title": "%command.deleteNoteAtLine%"
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "Open/Refresh Markdown",
+				"title": "%command.showMarkdown%",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "Refresh View",
+				"title": "%command.refreshTree%",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "Save to Git Notes",
-				"icon": "$(save)"
+				"title": "%command.saveToGitNotes%",
+				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "Setup .gitignore",
-				"icon": "$(gear)"
+				"title": "%command.setupGitignore%",
+				"icon": "$(heart)"
+			},
+			{
+				"command": "vibe-notes.copyForLLM",
+				"title": "%command.copyForLLM%",
+				"icon": "$(robot)"
 			}
 		],
 		"menus": {
@@ -93,19 +98,24 @@
 					"group": "navigation@0"
 				},
 				{
-					"command": "vibe-notes.showMarkdown",
+					"command": "vibe-notes.copyForLLM",
 					"when": "view == vibeNotesView",
 					"group": "navigation@1"
 				},
 				{
-					"command": "vibe-notes.saveToGitNotes",
+					"command": "vibe-notes.showMarkdown",
 					"when": "view == vibeNotesView",
 					"group": "navigation@2"
 				},
 				{
-					"command": "vibe-notes.setupGitignore",
+					"command": "vibe-notes.saveToGitNotes",
 					"when": "view == vibeNotesView",
 					"group": "navigation@3"
+				},
+				{
+					"command": "vibe-notes.setupGitignore",
+					"when": "view == vibeNotesView",
+					"group": "navigation@4"
 				}
 			]
 		},
@@ -113,7 +123,7 @@
 			"activitybar": [
 				{
 					"id": "vibe-notes",
-					"title": "Vibe Notes",
+					"title": "%viewsContainers.activitybar.title%",
 					"icon": "$(comment-discussion)"
 				}
 			]
@@ -127,6 +137,23 @@
 					"contextualTitle": "Vibe Notes"
 				}
 			]
+		},
+		"configuration": {
+			"title": "%config.title%",
+			"properties": {
+				"vibe-notes.copyForLLMPrompt": {
+					"type": "string",
+					"default": "Please review and implement the following code feedback:",
+					"description": "%config.copyForLLMPrompt.description%",
+					"markdownDescription": "%config.copyForLLMPrompt.markdownDescription%"
+				},
+				"vibe-notes.copyForLLMIncludeCode": {
+					"type": "boolean",
+					"default": true,
+					"description": "%config.copyForLLMIncludeCode.description%",
+					"markdownDescription": "%config.copyForLLMIncludeCode.markdownDescription%"
+				}
+			}
 		}
 	},
 	"scripts": {
