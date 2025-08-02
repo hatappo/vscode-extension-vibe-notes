@@ -23,9 +23,18 @@ export function parseMarkdownToNotes(markdownContent: string): {
 	let currentLineSpec: string | null = null;
 	let collectingNote = false;
 	let noteLines: string[] = [];
+	let foundFirstHeading = false;
 	
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
+		
+		// Skip all lines until we find the first # heading
+		if (!foundFirstHeading) {
+			if (line.startsWith('# ')) {
+				foundFirstHeading = true;
+			}
+			continue;
+		}
 		
 		// Match file header: ## [src/file.ts](src/file.ts)
 		const fileMatch = line.match(/^##\s+\[(.+?)\]/);

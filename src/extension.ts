@@ -117,9 +117,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
 		const now = new Date().toLocaleString();
 		
-		return `# Vibe Notes
-
-> You can now fully edit this markdown file!
+		return `> You can now fully edit this markdown file!
 > - Edit existing note content
 > - Add new notes
 > - Delete notes  
@@ -129,6 +127,8 @@ export async function activate(context: vscode.ExtensionContext) {
 Generated: ${now}
 
 ---
+
+# Vibe Notes
 
 ${enhancedMarkdown}`;
 	};
@@ -181,13 +181,21 @@ ${enhancedMarkdown}`;
 					? `L${note.startLine}`
 					: `L${note.startLine}-${note.endLine}`;
 
-				// Get code content for the first line
-				let codePreview = "";
-				if (fileLines.length > 0 && note.startLine <= fileLines.length) {
-					// Get the line (1-based index)
-					const codeLine = fileLines[note.startLine - 1];
-					// Remove leading whitespace
-					codePreview = codeLine.trimStart();
+				// Get code content for all lines in the range
+				const codePreviewLines: string[] = [];
+				if (fileLines.length > 0) {
+					const endLine = Math.min(note.endLine, fileLines.length);
+					// Calculate padding width based on the last line number
+					const maxLineNumWidth = endLine.toString().length;
+					
+					for (let lineNum = note.startLine; lineNum <= endLine; lineNum++) {
+						const codeLine = fileLines[lineNum - 1];
+						if (codeLine !== undefined) {
+							// Pad line number to match the width of the last line number
+							const paddedLineNum = lineNum.toString().padStart(maxLineNumWidth, ' ');
+							codePreviewLines.push(`> ${paddedLineNum}: ${codeLine}`);
+						}
+					}
 				}
 
 				// Create clickable link to specific line (using relative path)
@@ -198,8 +206,8 @@ ${enhancedMarkdown}`;
 				markdownSections.push("");
 				
 				// Code preview in quote block
-				if (codePreview) {
-					markdownSections.push(`> ${codePreview}`);
+				if (codePreviewLines.length > 0) {
+					markdownSections.push(...codePreviewLines);
 					markdownSections.push("");
 				}
 				
