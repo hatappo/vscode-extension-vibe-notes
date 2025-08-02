@@ -1,7 +1,7 @@
 {
 	"name": "vibe-notes",
-	"displayName": "Vibe Notes",
-	"description": "Private code notes that vibe with your workflow",
+	"displayName": "%extension.displayName%",
+	"description": "%extension.description%",
 	"publisher": "hatappo",
 	"version": "0.1.0",
 	"license": "MIT",
@@ -29,47 +29,47 @@
 		"commands": [
 			{
 				"command": "vibe-notes.addNote",
-				"title": "Vibe Notes: Add Note to Line"
+				"title": "%command.addNote%"
 			},
 			{
 				"command": "vibe-notes.editNoteAtCursor",
-				"title": "Vibe Notes: Edit Note"
+				"title": "%command.editNoteAtCursor%"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtCursor",
-				"title": "Vibe Notes: Delete Note"
+				"title": "%command.deleteNoteAtCursor%"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLine",
-				"title": "Vibe Notes: Edit Note at Line"
+				"title": "%command.editNoteAtLine%"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtLine",
-				"title": "Vibe Notes: Delete Note at Line"
+				"title": "%command.deleteNoteAtLine%"
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "Open/Refresh Markdown",
+				"title": "%command.showMarkdown%",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "Refresh View",
+				"title": "%command.refreshTree%",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "Save to git notes",
+				"title": "%command.saveToGitNotes%",
 				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "Setup gitignore",
+				"title": "%command.setupGitignore%",
 				"icon": "$(heart)"
 			},
 			{
 				"command": "vibe-notes.copyForLLM",
-				"title": "Copy for AI/LLM",
+				"title": "%command.copyForLLM%",
 				"icon": "$(robot)"
 			}
 		],
@@ -123,7 +123,7 @@
 			"activitybar": [
 				{
 					"id": "vibe-notes",
-					"title": "Vibe Notes",
+					"title": "%viewsContainers.activitybar.title%",
 					"icon": "$(comment-discussion)"
 				}
 			]
@@ -139,19 +139,19 @@
 			]
 		},
 		"configuration": {
-			"title": "Vibe Notes",
+			"title": "%config.title%",
 			"properties": {
 				"vibe-notes.copyForLLMPrompt": {
 					"type": "string",
 					"default": "Please review and implement the following code feedback:",
-					"description": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.",
-					"markdownDescription": "Prompt text to prepend when copying notes for AI/LLM. Leave empty to copy without prompt.\n\n**Default:** `Please review and implement the following code feedback:`\n\n**Note:** To restore the default value, edit settings.json and remove this property."
+					"description": "%config.copyForLLMPrompt.description%",
+					"markdownDescription": "%config.copyForLLMPrompt.markdownDescription%"
 				},
 				"vibe-notes.copyForLLMIncludeCode": {
 					"type": "boolean",
 					"default": true,
-					"description": "Include code snippets when copying notes for AI/LLM. Disable to reduce token usage.",
-					"markdownDescription": "Include code snippets when copying notes for AI/LLM.\n\n**When enabled:** Notes include the actual code being referenced, providing full context.\n\n**When disabled:** Only note comments are included, reducing token usage."
+					"description": "%config.copyForLLMIncludeCode.description%",
+					"markdownDescription": "%config.copyForLLMIncludeCode.markdownDescription%"
 				}
 			}
 		}

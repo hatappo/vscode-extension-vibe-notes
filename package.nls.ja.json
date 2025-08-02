@@ -1,0 +1,20 @@
+{
+	"extension.displayName": "Vibe Notes",
+	"extension.description": "ワークフローに寄り添うプライベートなコードノート",
+	"command.addNote": "行にノートを追加",
+	"command.editNoteAtCursor": "ノートを編集",
+	"command.deleteNoteAtCursor": "ノートを削除",
+	"command.editNoteAtLine": "指定行のノートを編集",
+	"command.deleteNoteAtLine": "指定行のノートを削除",
+	"command.showMarkdown": "Markdownを開く/更新",
+	"command.refreshTree": "ビューを更新",
+	"command.saveToGitNotes": "git notesに保存",
+	"command.setupGitignore": "gitignoreをセットアップ",
+	"command.copyForLLM": "AI/LLM用にコピー",
+	"config.title": "Vibe Notes",
+	"config.copyForLLMPrompt.description": "AI/LLM用にコピーする際に先頭に追加するプロンプトテキスト。空にするとプロンプトなしでコピーします。",
+	"config.copyForLLMPrompt.markdownDescription": "AI/LLM用にコピーする際に先頭に追加するプロンプトテキスト。空にするとプロンプトなしでコピーします。\n\n**デフォルト:** `Please review and implement the following code feedback:`\n\n**注意:** デフォルト値に戻すには、settings.jsonを編集してこのプロパティを削除してください。",
+	"config.copyForLLMIncludeCode.description": "AI/LLM用にコピーする際にコードスニペットを含める。トークン使用量を減らすには無効にします。",
+	"config.copyForLLMIncludeCode.markdownDescription": "AI/LLM用にコピーする際にコードスニペットを含めるかどうか。\n\n**有効時:** 参照されているコードを含め、完全なコンテキストを提供します。\n\n**無効時:** ノートのコメントのみが含まれ、トークン使用量を削減します。",
+	"viewsContainers.activitybar.title": "Vibe Notes"
+}
