@@ -6,6 +6,25 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-08-03
+
+### Added
+- Copy for AI/LLM feature with configurable prompt and code inclusion options
+- Internationalization (i18n) support for Japanese and English
+- "Vibe Notes:" prefix to all command titles for better discoverability
+
+### Changed
+- Major folder structure reorganization based on responsibilities
+- Renamed NoteDecorationProvider to NoteDecorationManager
+- Refactored extension.ts from 779 to ~150 lines (80% reduction)
+- Enhanced multi-line code preview with proper line number alignment
+- Improved markdown format with instructions before main content
+- Reordered toolbar buttons for better workflow
+
+### Fixed
+- Code indentation normalization in markdown quotes
+- Resource cleanup using VSCode's standard disposable pattern
+
 ## [0.1.0] - 2025-08-01
 
 ### Added
