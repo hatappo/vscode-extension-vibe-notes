@@ -21,14 +21,14 @@ export async function generateMarkdownFileContent(
 	
 	if (showPreamble) {
 		const now = new Date().toLocaleString();
-		return `> You can fully edit as markdown!
-> - Edit existing notes, add new notes, delete notes, or change line numbers
-> - Use \`## /\` for general notes (project-wide or cross-file topics)
-> - Save the file (\`Ctrl+S\` / \`Cmd+S\`) to apply all changes
+		return `<!-- 
+You can fully edit as markdown!
+- Edit existing notes, add new notes, delete notes, or change line numbers
+- Use "## /" for general notes (project-wide or cross-file topics)
+- Save the file ("Ctrl+S" / "Cmd+S") to apply all changes
 
 Generated: ${now}
-
----
+-->
 
 ${enhancedMarkdown}`;
 	} else {

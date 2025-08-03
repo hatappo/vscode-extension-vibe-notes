@@ -28,9 +28,9 @@ export function parseMarkdownToNotes(markdownContent: string): {
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
 
-		// Skip all lines until we find the separator starting with "---"
+		// Skip all lines until we find the end of HTML comment
 		if (!foundSeparator) {
-			if (line.startsWith("---")) {
+			if (line.includes("-->")) {
 				foundSeparator = true;
 			}
 			continue;
