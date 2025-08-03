@@ -23,21 +23,21 @@ export function parseMarkdownToNotes(markdownContent: string): {
 	let currentLineSpec: string | null = null;
 	let collectingNote = false;
 	let noteLines: string[] = [];
-	let foundFirstHeading = false;
+	let foundSeparator = false;
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
 
-		// Skip all lines until we find the first # heading
-		if (!foundFirstHeading) {
-			if (line.startsWith("# ")) {
-				foundFirstHeading = true;
+		// Skip all lines until we find the separator starting with "---"
+		if (!foundSeparator) {
+			if (line.startsWith("---")) {
+				foundSeparator = true;
 			}
 			continue;
 		}
 
-		// Match General section: ## // Notes
-		if (line === "## // Notes") {
+		// Match General section: ## / or ## / followed by any text
+		if (line === "## /" || line.startsWith("## / ")) {
 			// Save previous note if exists
 			if (currentFile && currentLineSpec && noteLines.length > 0) {
 				const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
@@ -96,27 +96,50 @@ export function parseMarkdownToNotes(markdownContent: string): {
 
 		// Collect note lines
 		if (collectingNote) {
-			// Skip quote blocks (code preview)
-			if (line.startsWith("> ")) {
-				continue;
-			}
-
-			// Stop collecting at next header or empty line followed by header
-			const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
-			if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {
-				collectingNote = false;
-				if (currentFile && currentLineSpec && noteLines.length > 0) {
-					const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
-					if (parsed.error) {
-						errors.push(parsed.error);
-					} else if (parsed.note) {
-						notes.push(parsed.note);
+			// Special handling for General Notes - collect everything until next ## section
+			if (currentFile === "/") {
+				// Check if this line starts a new section (## )
+				if (line.startsWith("## ")) {
+					// Process the line in the next iteration
+					i--;
+					collectingNote = false;
+					if (currentLineSpec && noteLines.length > 0) {
+						const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
+						if (parsed.error) {
+							errors.push(parsed.error);
+						} else if (parsed.note) {
+							notes.push(parsed.note);
+						}
 					}
+					noteLines = [];
+				} else {
+					// Include everything in General Notes (including ### headers)
+					noteLines.push(line);
 				}
-				noteLines = [];
-			} else if (line !== "" || noteLines.length > 0) {
-				// Include empty lines within notes, but not leading empty lines
-				noteLines.push(line);
+			} else {
+				// Normal file notes handling
+				// Skip quote blocks (code preview)
+				if (line.startsWith("> ")) {
+					continue;
+				}
+
+				// Stop collecting at next header or empty line followed by header
+				const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
+				if (line === "" && (nextLine.startsWith("##") || nextLine.startsWith("###"))) {
+					collectingNote = false;
+					if (currentFile && currentLineSpec && noteLines.length > 0) {
+						const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
+						if (parsed.error) {
+							errors.push(parsed.error);
+						} else if (parsed.note) {
+							notes.push(parsed.note);
+						}
+					}
+					noteLines = [];
+				} else if (line !== "" || noteLines.length > 0) {
+					// Include empty lines within notes, but not leading empty lines
+					noteLines.push(line);
+				}
 			}
 		}
 	}

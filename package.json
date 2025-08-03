@@ -29,47 +29,47 @@
 		"commands": [
 			{
 				"command": "vibe-notes.addNote",
-				"title": "%command.addNote%"
+				"title": "Add Note to Line"
 			},
 			{
 				"command": "vibe-notes.editNoteAtCursor",
-				"title": "%command.editNoteAtCursor%"
+				"title": "Edit Note"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtCursor",
-				"title": "%command.deleteNoteAtCursor%"
+				"title": "Delete Note"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLine",
-				"title": "%command.editNoteAtLine%"
+				"title": "Edit Note at Line"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtLine",
-				"title": "%command.deleteNoteAtLine%"
+				"title": "Delete Note at Line"
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "%command.showMarkdown%",
+				"title": "Open as Markdown",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "%command.refreshTree%",
+				"title": "Refresh",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "%command.saveToGitNotes%",
+				"title": "Save to Git Notes",
 				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "%command.setupGitignore%",
+				"title": "Setup Gitignore",
 				"icon": "$(heart)"
 			},
 			{
 				"command": "vibe-notes.copyForLLM",
-				"title": "%command.copyForLLM%",
+				"title": "Copy for LLM",
 				"icon": "$(robot)"
 			}
 		],
@@ -93,7 +93,7 @@
 			],
 			"view/title": [
 				{
-					"command": "vibe-notes.refreshTree",
+					"command": "vibe-notes.showMarkdown",
 					"when": "view == vibeNotesView",
 					"group": "navigation@0"
 				},
@@ -103,7 +103,7 @@
 					"group": "navigation@1"
 				},
 				{
-					"command": "vibe-notes.showMarkdown",
+					"command": "vibe-notes.refreshTree",
 					"when": "view == vibeNotesView",
 					"group": "navigation@2"
 				},
@@ -152,6 +152,12 @@
 					"default": true,
 					"description": "%config.copyForLLMIncludeCode.description%",
 					"markdownDescription": "%config.copyForLLMIncludeCode.markdownDescription%"
+				},
+				"vibe-notes.showMarkdownPreamble": {
+					"type": "boolean",
+					"default": true,
+					"description": "%config.showMarkdownPreamble.description%",
+					"markdownDescription": "%config.showMarkdownPreamble.markdownDescription%"
 				}
 			}
 		}

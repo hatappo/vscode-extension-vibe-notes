@@ -101,7 +101,7 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		// Create file items
 		const items: TreeItem[] = [];
 		for (const [filePath, count] of fileMap) {
-			const label = filePath === "/" ? "// Notes" : filePath;
+			const label = filePath === "/" ? "/ (General Notes)" : filePath;
 			const item = new TreeItem(
 				label,
 				`${count} note${count > 1 ? "s" : ""}`,
