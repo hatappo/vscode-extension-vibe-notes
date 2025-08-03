@@ -6,10 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [0.0.4] - 2025-08-04
+## [0.0.5] - 2025-08-04
 
 ### Notice
 - Added migration notice to README - Shadow Comments has been replaced by Vibe Notes
+- Updated repository URL to point to new location
 
 ## [0.0.3] - 2025-07-31
 
