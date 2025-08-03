@@ -43,6 +43,11 @@ export class NoteDecorationManager {
 
 		// Group notes by file
 		for (const note of notes) {
+			// Skip General Notes
+			if (note.filePath === "/") {
+				continue;
+			}
+			
 			const filePath = path.join(this.workspaceFolder.uri.fsPath, note.filePath);
 			if (!this.decorations.has(filePath)) {
 				this.decorations.set(filePath, []);

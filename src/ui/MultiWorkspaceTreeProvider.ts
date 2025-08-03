@@ -101,8 +101,9 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 		// Create file items
 		const items: TreeItem[] = [];
 		for (const [filePath, count] of fileMap) {
+			const label = filePath === "/" ? "// Notes" : filePath;
 			const item = new TreeItem(
-				filePath,
+				label,
 				`${count} note${count > 1 ? "s" : ""}`,
 				vscode.TreeItemCollapsibleState.Collapsed,
 				"file",
@@ -121,7 +122,9 @@ export class MultiWorkspaceTreeProvider implements vscode.TreeDataProvider<TreeI
 
 		return fileNotes.map((note) => {
 			let label: string;
-			if (note.startLine === note.endLine) {
+			if (note.startLine === 0) {
+				label = "-";
+			} else if (note.startLine === note.endLine) {
 				label = `L${note.startLine}`;
 			} else {
 				label = `L${note.startLine}-${note.endLine}`;

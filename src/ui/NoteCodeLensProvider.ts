@@ -27,6 +27,11 @@ export class NoteCodeLensProvider implements vscode.CodeLensProvider {
 
 		// Create CodeLens for each note
 		for (const note of notes) {
+			// Skip General Notes
+			if (note.filePath === "/" || note.startLine === 0) {
+				continue;
+			}
+			
 			if (note.filePath === relativePath) {
 				// Create range for the first line of the note
 				const range = new vscode.Range(note.startLine - 1, 0, note.startLine - 1, 0);

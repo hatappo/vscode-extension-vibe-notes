@@ -36,6 +36,25 @@ export function parseMarkdownToNotes(markdownContent: string): {
 			continue;
 		}
 
+		// Match General section: ## // Notes
+		if (line === "## // Notes") {
+			// Save previous note if exists
+			if (currentFile && currentLineSpec && noteLines.length > 0) {
+				const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
+				if (parsed.error) {
+					errors.push(parsed.error);
+				} else if (parsed.note) {
+					notes.push(parsed.note);
+				}
+			}
+
+			currentFile = "/";
+			currentLineSpec = "0"; // Use "0" as special line spec for general notes
+			collectingNote = true;
+			noteLines = [];
+			continue;
+		}
+
 		// Match file header: ## [src/file.ts](src/file.ts)
 		const fileMatch = line.match(/^##\s+\[(.+?)\]/);
 		if (fileMatch) {
@@ -58,7 +77,7 @@ export function parseMarkdownToNotes(markdownContent: string): {
 
 		// Match line header: ### [L10](src/file.ts#L10) or ### [L10-20](src/file.ts#L10)
 		const lineMatch = line.match(/^###\s+\[L([\d\-]+)\]\(.*?\)/);
-		if (lineMatch && currentFile) {
+		if (lineMatch && currentFile && currentFile !== "/") {
 			// Save previous note if exists
 			if (currentLineSpec && noteLines.length > 0) {
 				const parsed = parseLineSpec(currentFile, currentLineSpec, noteLines.join("\n").trim());
@@ -140,8 +159,8 @@ function parseLineSpec(
 			return { error: `Invalid line range: ${lineSpec}` };
 		}
 
-		if (startLine <= 0 || endLine <= 0) {
-			return { error: `Line numbers must be positive: ${lineSpec}` };
+		if (startLine < 0 || endLine < 0) {
+			return { error: `Line numbers must be non-negative: ${lineSpec}` };
 		}
 
 		if (startLine > endLine) {
@@ -163,8 +182,8 @@ function parseLineSpec(
 			return { error: `Invalid line number: ${lineSpec}` };
 		}
 
-		if (line <= 0) {
-			return { error: `Line number must be positive: ${lineSpec}` };
+		if (line < 0) {
+			return { error: `Line number must be non-negative: ${lineSpec}` };
 		}
 
 		return {

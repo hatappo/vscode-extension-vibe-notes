@@ -67,6 +67,19 @@ export async function generateEnhancedMarkdown(
 	const markdownSections: string[] = [];
 
 	for (const filePath of sortedFilePaths) {
+		// Handle General Notes differently
+		if (filePath === "/") {
+			markdownSections.push(`## // Notes`);
+			markdownSections.push("");
+			
+			// General notes don't have line numbers or code preview
+			for (const note of groupedByFile[filePath]) {
+				markdownSections.push(note.comment);
+				markdownSections.push("");
+			}
+			continue;
+		}
+
 		// Try to read the file content (only if includeCode is true)
 		let fileLines: string[] = [];
 		if (includeCode) {
