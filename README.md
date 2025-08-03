@@ -1,5 +1,15 @@
 # Shadow Comments
 
+> [!IMPORTANT]
+> **This extension has been replaced by [Vibe Notes](https://marketplace.visualstudio.com/items?itemName=hatappo.vibe-notes)**
+> 
+> Shadow Comments is now **Vibe Notes** with improved features and better branding.
+> Please install the new extension for continued support and updates.
+> 
+> **[Install Vibe Notes](https://marketplace.visualstudio.com/items?itemName=hatappo.vibe-notes)**
+
+---
+
 Keep private code comments that live in the shadows - never touching your source files or git history. Perfect for personal notes, code reviews, and AI-assisted coding workflows.
 
 ## Features

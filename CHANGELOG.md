@@ -6,6 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.4] - 2025-08-04
+
+### Notice
+- Added migration notice to README - Shadow Comments has been replaced by Vibe Notes
+
 ## [0.0.3] - 2025-07-31
 
 ### Changed
