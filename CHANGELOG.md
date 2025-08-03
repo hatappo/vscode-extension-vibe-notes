@@ -6,6 +6,25 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-08-03
+
+### Added
+- General Notes support for project-wide notes not tied to specific files
+  - Use `## /` in markdown format to create general notes
+  - Display as "/ (General Notes)" in tree view
+- Extension icon for marketplace display
+- .vscodeignore file to optimize package size
+- Configuration option to show/hide markdown preamble
+
+### Changed
+- Temp file headers now use HTML comments for language neutrality
+- Markdown preamble changed to HTML comment format
+- Tree view button order (Open as Markdown is now first)
+- Command titles are now English-only for simplicity
+
+### Fixed
+- Negative line number errors for General Notes in UI components
+
 ## [0.2.0] - 2025-08-03
 
 ### Added
