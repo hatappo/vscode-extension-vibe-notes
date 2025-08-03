@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Notes Icon</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding: 40px;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .icon-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .icon-card img {
+            width: 128px;
+            height: 128px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+        .icon-name {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            margin: 0 0 20px;
+        }
+        .backgrounds {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 30px;
+        }
+        .bg-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .bg-preview {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .bg-preview img {
+            width: 64px;
+            height: 64px;
+        }
+        .bg-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .bg-white { background: #ffffff; }
+        .bg-black { background: #000000; }
+        .bg-dark { background: #1e1e1e; }
+        .bg-vscode { background: #252526; }
+        .bg-blue { background: #007ACC; }
+    </style>
+</head>
+<body>
+    <h1>Vibe Notes Icon Variations</h1>
+    <div class="icon-grid">
+        <div class="icon-card">
+            <img src="icon.svg" alt="Color version">
+            <p class="icon-name">icon.svg (Blue #4285f4)</p>
+            <div class="backgrounds">
+                <div class="bg-item">
+                    <div class="bg-preview bg-white">
+                        <img src="icon.svg">
+                    </div>
+                    <span class="bg-label">White</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-black">
+                        <img src="icon.svg">
+                    </div>
+                    <span class="bg-label">Black</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-dark">
+                        <img src="icon.svg">
+                    </div>
+                    <span class="bg-label">VS Dark</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-vscode">
+                        <img src="icon.svg">
+                    </div>
+                    <span class="bg-label">VS Code</span>
+                </div>
+            </div>
+        </div>
+        <div class="icon-card">
+            <img src="icon-black.svg" alt="Black version">
+            <p class="icon-name">icon-black.svg (Black #000000)</p>
+            <div class="backgrounds">
+                <div class="bg-item">
+                    <div class="bg-preview bg-white">
+                        <img src="icon-black.svg">
+                    </div>
+                    <span class="bg-label">White</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-black" style="border-color: #666;">
+                        <img src="icon-black.svg" style="opacity: 0.2;">
+                    </div>
+                    <span class="bg-label" style="color: #999;">Black</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-blue">
+                        <img src="icon-black.svg">
+                    </div>
+                    <span class="bg-label">Blue</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview" style="background: #f0f0f0;">
+                        <img src="icon-black.svg">
+                    </div>
+                    <span class="bg-label">Light Gray</span>
+                </div>
+            </div>
+        </div>
+        <div class="icon-card">
+            <img src="icon-white.svg" alt="White version" style="background: #333; padding: 20px; border-radius: 8px;">
+            <p class="icon-name">icon-white.svg (White #ffffff)</p>
+            <div class="backgrounds">
+                <div class="bg-item">
+                    <div class="bg-preview bg-white" style="border-color: #666;">
+                        <img src="icon-white.svg" style="opacity: 0.1;">
+                    </div>
+                    <span class="bg-label" style="color: #999;">White</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-black">
+                        <img src="icon-white.svg">
+                    </div>
+                    <span class="bg-label">Black</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-dark">
+                        <img src="icon-white.svg">
+                    </div>
+                    <span class="bg-label">VS Dark</span>
+                </div>
+                <div class="bg-item">
+                    <div class="bg-preview bg-blue">
+                        <img src="icon-white.svg">
+                    </div>
+                    <span class="bg-label">Blue</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

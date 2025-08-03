@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black and white version -->
+  <g transform="translate(64, 64)" fill="none" stroke="#000000" stroke-width="4">
+    <!-- Note outline -->
+    <rect x="-30" y="-38" width="60" height="76" rx="4" />
+    
+    <!-- Text lines -->
+    <line x1="-18" y1="-20" x2="18" y2="-20" stroke-linecap="round" />
+    <line x1="-18" y1="-8" x2="10" y2="-8" stroke-linecap="round" />
+    <line x1="-18" y1="4" x2="2" y2="4" stroke-linecap="round" />
+    <line x1="-18" y1="16" x2="-6" y2="16" stroke-linecap="round" />
+    
+    <!-- Pencil outline -->
+    <g transform="rotate(-45) translate(28, -28)" stroke-linejoin="round">
+      <rect x="0" y="0" width="8" height="28" rx="4" />
+      <path d="M 0 28 L 4 34 L 8 28" />
+    </g>
+  </g>
+</svg>
