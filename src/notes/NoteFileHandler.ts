@@ -69,7 +69,12 @@ export class NoteFileHandler {
 	/**
 	 * Format line specification
 	 */
-	private formatLineSpec(startLine: number, endLine: number): string {
+	private formatLineSpec(filePath: string, startLine: number, endLine: number): string {
+		// General notes don't have line numbers
+		if (filePath === "/" || startLine === 0) {
+			return "";
+		}
+		
 		if (startLine === endLine) {
 			return `${startLine}`;
 		} else {
@@ -131,9 +136,9 @@ export class NoteFileHandler {
 			}
 
 			// Format the new note with new format
-			const lineSpec = this.formatLineSpec(startLine, endLine);
+			const lineSpec = this.formatLineSpec(filePath, startLine, endLine);
 			const escapedNote = this.escapeNote(note);
-			const newLine = `${filePath}#L${lineSpec} "${escapedNote}"`;
+			const newLine = lineSpec ? `${filePath}#L${lineSpec} "${escapedNote}"` : `${filePath} "${escapedNote}"`;
 
 			// Append to file
 			const newContent = content.trim() ? `${content.trim()}\n${newLine}\n` : `${newLine}\n`;
@@ -162,9 +167,9 @@ export class NoteFileHandler {
 			// Find and replace the line
 			const updatedLines = lines.map((line) => {
 				if (line.trim() === oldNote.raw) {
-					const lineSpec = this.formatLineSpec(oldNote.startLine, oldNote.endLine);
+					const lineSpec = this.formatLineSpec(oldNote.filePath, oldNote.startLine, oldNote.endLine);
 					const escapedNote = this.escapeNote(newNoteText);
-					return `${oldNote.filePath}#L${lineSpec} "${escapedNote}"`;
+					return lineSpec ? `${oldNote.filePath}#L${lineSpec} "${escapedNote}"` : `${oldNote.filePath} "${escapedNote}"`;
 				}
 				return line;
 			});
@@ -232,9 +237,10 @@ export class NoteFileHandler {
 			const lines: string[] = [];
 
 			for (const note of newNotes) {
-				const lineSpec = this.formatLineSpec(note.startLine, note.endLine);
+				const lineSpec = this.formatLineSpec(note.filePath, note.startLine, note.endLine);
 				const escapedNote = this.escapeNote(note.comment);
-				lines.push(`${note.filePath}#L${lineSpec} "${escapedNote}"`);
+				const line = lineSpec ? `${note.filePath}#L${lineSpec} "${escapedNote}"` : `${note.filePath} "${escapedNote}"`;
+				lines.push(line);
 			}
 
 			// Write to file

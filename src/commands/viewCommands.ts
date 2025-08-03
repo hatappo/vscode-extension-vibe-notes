@@ -57,6 +57,26 @@ export function registerViewCommands(
 				return;
 			}
 
+			// Handle General Notes - open markdown file
+			if (note.filePath === "/") {
+				const markdownPath = path.join(folder.uri.fsPath, ".notes.local.md");
+				const markdownUri = vscode.Uri.file(markdownPath);
+				
+				try {
+					const doc = await vscode.workspace.openTextDocument(markdownUri);
+					const editor = await vscode.window.showTextDocument(doc);
+					
+					// Scroll to top
+					const topPosition = new vscode.Position(0, 0);
+					const topRange = new vscode.Range(topPosition, topPosition);
+					editor.selection = new vscode.Selection(topPosition, topPosition);
+					editor.revealRange(topRange, vscode.TextEditorRevealType.AtTop);
+				} catch (error) {
+					vscode.window.showErrorMessage("Markdown file not found. Please use 'Open as Markdown' first.");
+				}
+				return;
+			}
+
 			const fullPath = path.join(folder.uri.fsPath, note.filePath);
 			const document = await vscode.workspace.openTextDocument(fullPath);
 			const editor = await vscode.window.showTextDocument(document);

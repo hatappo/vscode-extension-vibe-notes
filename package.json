@@ -4,6 +4,7 @@
 	"description": "%extension.description%",
 	"publisher": "hatappo",
 	"version": "0.2.0",
+	"icon": "media/icons/icon.png",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -29,47 +30,47 @@
 		"commands": [
 			{
 				"command": "vibe-notes.addNote",
-				"title": "%command.addNote%"
+				"title": "Add Note to Line"
 			},
 			{
 				"command": "vibe-notes.editNoteAtCursor",
-				"title": "%command.editNoteAtCursor%"
+				"title": "Edit Note"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtCursor",
-				"title": "%command.deleteNoteAtCursor%"
+				"title": "Delete Note"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLine",
-				"title": "%command.editNoteAtLine%"
+				"title": "Edit Note at Line"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtLine",
-				"title": "%command.deleteNoteAtLine%"
+				"title": "Delete Note at Line"
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "%command.showMarkdown%",
+				"title": "Open as Markdown",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "%command.refreshTree%",
+				"title": "Refresh",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "%command.saveToGitNotes%",
+				"title": "Save to Git Notes",
 				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "%command.setupGitignore%",
+				"title": "Setup Gitignore",
 				"icon": "$(heart)"
 			},
 			{
 				"command": "vibe-notes.copyForLLM",
-				"title": "%command.copyForLLM%",
+				"title": "Copy for LLM",
 				"icon": "$(robot)"
 			}
 		],
@@ -93,7 +94,7 @@
 			],
 			"view/title": [
 				{
-					"command": "vibe-notes.refreshTree",
+					"command": "vibe-notes.showMarkdown",
 					"when": "view == vibeNotesView",
 					"group": "navigation@0"
 				},
@@ -103,7 +104,7 @@
 					"group": "navigation@1"
 				},
 				{
-					"command": "vibe-notes.showMarkdown",
+					"command": "vibe-notes.refreshTree",
 					"when": "view == vibeNotesView",
 					"group": "navigation@2"
 				},
@@ -152,18 +153,25 @@
 					"default": true,
 					"description": "%config.copyForLLMIncludeCode.description%",
 					"markdownDescription": "%config.copyForLLMIncludeCode.markdownDescription%"
+				},
+				"vibe-notes.showMarkdownPreamble": {
+					"type": "boolean",
+					"default": true,
+					"description": "%config.showMarkdownPreamble.description%",
+					"markdownDescription": "%config.showMarkdownPreamble.markdownDescription%"
 				}
 			}
 		}
 	},
 	"scripts": {
 		"node": "node --experimental-strip-types --experimental-transform-types --experimental-detect-module --no-warnings=ExperimentalWarning --loader ts-node/esm",
-		"vscode:prepublish": "npm run package",
 		"compile": "npm run check-types && npm run lint && node esbuild.js",
 		"watch": "npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.js --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
 		"package": "npm run check-types && npm run lint && node esbuild.js --production",
+		"vscode:login": "vsce login",
+		"vscode:publish": "vsce publish",
 		"compile-tests": "tsc -p . --outDir out",
 		"watch-tests": "tsc -p . -w --outDir out",
 		"pretest": "npm run compile-tests && npm run compile && npm run lint",

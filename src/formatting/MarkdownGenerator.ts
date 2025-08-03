@@ -14,22 +14,26 @@ export async function generateMarkdownFileContent(
 	workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<string> {
 	const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder);
-	const now = new Date().toLocaleString();
-
-	return `> You can now fully edit this markdown file!
-> - Edit existing note content
-> - Add new notes
-> - Delete notes  
-> - Change line numbers
-> Save the file (Ctrl+S / Cmd+S) to apply all changes.
+	
+	// Get configuration
+	const config = vscode.workspace.getConfiguration("vibe-notes");
+	const showPreamble = config.get<boolean>("showMarkdownPreamble", true);
+	
+	if (showPreamble) {
+		const now = new Date().toLocaleString();
+		return `<!-- 
+You can fully edit as markdown!
+- Edit existing notes, add new notes, delete notes, or change line numbers
+- Use "## /" for general notes (project-wide or cross-file topics)
+- Save the file ("Ctrl+S" / "Cmd+S") to apply all changes
 
 Generated: ${now}
-
----
-
-# Vibe Notes
+-->
 
 ${enhancedMarkdown}`;
+	} else {
+		return enhancedMarkdown;
+	}
 }
 
 /**
@@ -43,6 +47,7 @@ export async function generateEnhancedMarkdown(
 	notes: Note[],
 	workspaceFolder: vscode.WorkspaceFolder,
 	includeCode: boolean = true,
+	forLLM: boolean = false,
 ): Promise<string> {
 	if (notes.length === 0) {
 		return "*No notes found*";
@@ -67,6 +72,20 @@ export async function generateEnhancedMarkdown(
 	const markdownSections: string[] = [];
 
 	for (const filePath of sortedFilePaths) {
+		// Handle General Notes differently
+		if (filePath === "/") {
+			// Use simpler header for LLM output
+			markdownSections.push(forLLM ? `## General` : `## / (General Notes)`);
+			markdownSections.push("");
+			
+			// General notes don't have line numbers or code preview
+			for (const note of groupedByFile[filePath]) {
+				markdownSections.push(note.comment);
+				markdownSections.push("");
+			}
+			continue;
+		}
+
 		// Try to read the file content (only if includeCode is true)
 		let fileLines: string[] = [];
 		if (includeCode) {

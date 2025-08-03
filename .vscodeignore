@@ -1,42 +1,41 @@
-# VSCode development files
+# Build and test files
 .vscode/**
 .vscode-test/**
-**/.vscode-test.*
-
-# Source and development files
-src/**
 out/**
-**/*.ts
-**/*.map
-
-# Build and config files
-esbuild.js
-**/tsconfig.json
-**/eslint.config.mjs
-.eslintrc.json
+src/**
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
-
-# Dependencies and lock files
+**/tsconfig.json
+**/*.map
+**/*.ts
 node_modules/**
-package-lock.json
+dist/**/*.map
 
-# Version control and CI/CD
+# Development files
+.notes/**
+.notes.local.md
+CLAUDE.md
+biome.json
+eslint.config.mjs
+esbuild.js
+scripts/**
+docs/**
+tmp.*
+*.vsix
+
+# Test files
+**/*.test.js
+**/*.test.ts
+**/test/**
+
+# Icon development files
+media/icons/*.svg
+media/icons/preview.html
+
+# Other unnecessary files
 .git/**
 .github/**
-
-# Documentation and user files
-docs/**
+package-lock.json
 .claude/**
-.notes.local.txt
-.notes/
-
-# System and temporary files
-.DS_Store
-tmp/
-tmp.*
-*.tmp.*
-
-# Package files
-*.vsix
+.vscode-test.mjs

@@ -41,13 +41,14 @@ export function registerNoteCommands(
 		const relativePath = path.relative(workspaceFolder.uri.fsPath, editor.document.uri.fsPath);
 
 		// Create header for the temp file
-		const header = `# Add Vibe Note
-# File: ${relativePath}
-# Line: ${startLine === endLine ? startLine : `${startLine}-${endLine}`}
-# 
-# Enter your note below and save the file (Ctrl+S / Cmd+S).
-# Close without saving to cancel.
-# ========================================
+		const header = `<!-- 
+Add Vibe Note
+File: ${relativePath}
+Line: ${startLine === endLine ? startLine : `${startLine}-${endLine}`}
+
+Enter your note below and save the file (Ctrl+S / Cmd+S).
+Close without saving to cancel.
+-->
 
 `;
 
@@ -58,15 +59,15 @@ export function registerNoteCommands(
 			}
 
 			// Extract note text (remove header)
-			const lines = content.split("\n");
-			const separatorIndex = lines.findIndex((line) => line.includes("========================================"));
-
-			if (separatorIndex === -1 || separatorIndex >= lines.length - 1) {
+			const commentEndIndex = content.indexOf("-->");
+			
+			if (commentEndIndex === -1) {
 				return;
 			}
 
-			const noteLines = lines.slice(separatorIndex + 1);
-			const note = noteLines.join("\n").trim();
+			// Extract content after the comment
+			const noteContent = content.substring(commentEndIndex + 3); // +3 for "-->"
+			const note = noteContent.trim();
 
 			if (!note) {
 				return;

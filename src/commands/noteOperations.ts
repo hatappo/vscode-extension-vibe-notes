@@ -25,13 +25,14 @@ export async function editNote(
 	}
 
 	// Create header for the temp file
-	const header = `# Edit Vibe Note
-# File: ${note.filePath}
-# Line: ${note.startLine === note.endLine ? note.startLine : `${note.startLine}-${note.endLine}`}
-# 
-# Edit your note below and save the file (Ctrl+S / Cmd+S).
-# Close without saving to cancel.
-# ========================================
+	const header = `<!-- 
+Edit Vibe Note
+File: ${note.filePath}
+Line: ${note.startLine === note.endLine ? note.startLine : `${note.startLine}-${note.endLine}`}
+
+Edit your note below and save the file (Ctrl+S / Cmd+S).
+Close without saving to cancel.
+-->
 
 `;
 
@@ -42,15 +43,23 @@ export async function editNote(
 		}
 
 		// Extract note text (remove header)
-		const lines = content.split("\n");
-		const separatorIndex = lines.findIndex((line) => line.includes("========================================"));
-
-		if (separatorIndex === -1 || separatorIndex >= lines.length - 1) {
+		const commentEndIndex = content.indexOf("-->");
+		
+		if (commentEndIndex === -1) {
+			// No comment end found, use entire content
+			const newNote = content.trim();
+			if (!newNote || newNote === note.comment) {
+				return;
+			}
+			await handler.updateNote(note, newNote);
+			await updateUIComponents(workspaceFolder);
+			vscode.window.showInformationMessage("Note updated successfully");
 			return;
 		}
 
-		const noteLines = lines.slice(separatorIndex + 1);
-		const newNote = noteLines.join("\n").trim();
+		// Extract content after the comment
+		const noteContent = content.substring(commentEndIndex + 3); // +3 for "-->"
+		const newNote = noteContent.trim();
 
 		if (!newNote || newNote === note.comment) {
 			return;

@@ -22,8 +22,8 @@ interface ParseError {
 }
 
 /** Regular expression for parsing notes */
-// Matches: file.ts#L7 or file.ts#L7-9
-const noteLineRegex: RegExp = /^(.+?)#L(\d+(?:-\d+)?)\s+"((?:[^"\\]|\\.)*)"\s*$/;
+// Matches: file.ts#L7 or file.ts#L7-9 or / "general note"
+const noteLineRegex: RegExp = /^(.+?)(?:#L(\d+(?:-\d+)?))?\s+"((?:[^"\\]|\\.)*)"\s*$/;
 
 /** Parse a single line note */
 function parseNote(line: string): Note | null {
@@ -41,7 +41,11 @@ function parseNote(line: string): Note | null {
 	let startLine: number;
 	let endLine: number;
 
-	if (positionSpec.includes("-")) {
+	// Handle general notes (no position spec) or filePath="/"
+	if (filePath === "/" || !positionSpec) {
+		startLine = 0;
+		endLine = 0;
+	} else if (positionSpec.includes("-")) {
 		// Range: L7-9
 		const [startPos, endPos] = positionSpec.split("-");
 		startLine = Number(startPos);

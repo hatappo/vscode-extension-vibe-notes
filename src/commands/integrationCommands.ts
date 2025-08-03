@@ -131,7 +131,7 @@ export function registerIntegrationCommands(
 		const prompt = config.get<string>("copyForLLMPrompt");
 
 		// Generate enhanced markdown content for LLM
-		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder, includeCode);
+		const enhancedMarkdown = await generateEnhancedMarkdown(notes, workspaceFolder, includeCode, true);
 
 		// Add prompt only if not empty
 		const llmContent = prompt ? `${prompt}\n\n${enhancedMarkdown}` : enhancedMarkdown;
