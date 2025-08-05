@@ -65,12 +65,17 @@
 			{
 				"command": "vibe-notes.saveToGitNotes",
 				"title": "Vibe Notes: Save to Git Notes",
-				"icon": "$(git-branch)"
+				"icon": "$(git-commit)"
+			},
+			{
+				"command": "vibe-notes.appendToGitNotes",
+				"title": "Vibe Notes: Append to Git Notes",
+				"icon": "$(diff-added)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
 				"title": "Vibe Notes: Setup Gitignore",
-				"icon": "$(heart)"
+				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "vibe-notes.copyForLLM",
@@ -118,9 +123,14 @@
 					"group": "navigation@3"
 				},
 				{
-					"command": "vibe-notes.setupGitignore",
+					"command": "vibe-notes.appendToGitNotes",
 					"when": "view == vibeNotesView",
 					"group": "navigation@4"
+				},
+				{
+					"command": "vibe-notes.setupGitignore",
+					"when": "view == vibeNotesView",
+					"group": "navigation@5"
 				}
 			]
 		},

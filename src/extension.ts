@@ -97,7 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	await treeProvider.refresh();
 	const treeView = vscode.window.createTreeView("vibeNotesView", {
 		treeDataProvider: treeProvider,
-		showCollapseAll: true,
+		showCollapseAll: false,
 	});
 	context.subscriptions.push(treeView);
 
