@@ -6,6 +6,24 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-08-05
+
+### Added
+- "Append to Git Notes" command to append notes to existing git notes
+- Editor split mode configuration (none/horizontal/vertical)
+- "Edit Note as Markdown" CodeLens button
+- All commands now have "Vibe Notes: " prefix for better discoverability
+- Git Notes commands in Tree View toolbar
+
+### Changed
+- Save to Git Notes now exports in markdown format
+- Updated CodeLens button titles for clarity
+- Hide "Collapse All" button in Tree View
+- Improved button icons for consistency
+
+### Fixed
+- Horizontal split editor behavior when opening note editor
+
 ## [0.3.1] - 2025-08-04
 
 ### Fixed

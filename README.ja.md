@@ -46,6 +46,7 @@ echo ".notes.local.md" >> .gitignore
 - `Vibe Notes: Open Notes as Markdown` - すべてのノートをマークダウン形式で表示/編集
 - `Vibe Notes: Copy for LLM` - ノートをAIフレンドリーな形式でコピー
 - `Vibe Notes: Save to Git Notes` - ノートをgit notesにエクスポート
+- `Vibe Notes: Append to Git Notes` - 既存のgit notesにノートを追記
 - `Vibe Notes: Refresh Tree` - ノートのツリービューを更新
 
 ## 使い方のコツ
@@ -62,6 +63,7 @@ echo ".notes.local.md" >> .gitignore
 - `vibe-notes.showMarkdownPreamble` - マークダウンファイルの説明ヘッダーの表示/非表示（デフォルト: true）
 - `vibe-notes.copyForLLM.defaultPrompt` - LLMコピー機能のデフォルトプロンプト
 - `vibe-notes.copyForLLM.includeCode` - LLM向けコピー時にコードスニペットを含める（デフォルト: false）
+- `vibe-notes.editorSplitMode` - ノート編集時のエディター分割方法（none/horizontal/vertical、デフォルト: horizontal）
 
 ## 動作要件
 

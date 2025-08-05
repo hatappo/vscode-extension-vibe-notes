@@ -46,6 +46,7 @@ Access via Command Palette (Cmd/Ctrl+Shift+P):
 - `Vibe Notes: Open Notes as Markdown` - View/edit all notes in markdown format
 - `Vibe Notes: Copy for LLM` - Copy notes in AI-friendly format
 - `Vibe Notes: Save to Git Notes` - Export notes to git notes
+- `Vibe Notes: Append to Git Notes` - Append notes to existing git notes
 - `Vibe Notes: Refresh Tree` - Refresh the notes tree view
 
 ## Tips
@@ -62,6 +63,7 @@ Available settings:
 - `vibe-notes.showMarkdownPreamble` - Show/hide the instructional header in markdown files (default: true)
 - `vibe-notes.copyForLLM.defaultPrompt` - Default prompt for LLM copy feature
 - `vibe-notes.copyForLLM.includeCode` - Include code snippets when copying for LLM (default: false)
+- `vibe-notes.editorSplitMode` - How to split editor when opening notes (none/horizontal/vertical, default: horizontal)
 
 ## Requirements
 
