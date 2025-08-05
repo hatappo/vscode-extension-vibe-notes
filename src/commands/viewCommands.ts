@@ -2,8 +2,9 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { NoteFileHandler } from "../notes/NoteFileHandler";
 import { MultiWorkspaceTreeProvider } from "../ui/MultiWorkspaceTreeProvider";
-import { generateMarkdownFileContent } from "../formatting/MarkdownGenerator";
+import { MarkdownFileManager } from "../formatting/MarkdownFileManager";
 import { getHandlerWithWorkspace } from "../notes/NoteFinder";
+import { EditorNavigator } from "../util/EditorNavigator";
 
 /**
  * Register all view-related commands
@@ -23,21 +24,9 @@ export function registerViewCommands(
 			return;
 		}
 
-		// Generate enhanced markdown content
-		const notes = await handler.readNotes();
-		const markdownContent = await generateMarkdownFileContent(notes, workspaceFolder);
-
-		// Write to .notes.local.md in workspace root
-		const markdownPath = path.join(workspaceFolder.uri.fsPath, ".notes.local.md");
-		const markdownUri = vscode.Uri.file(markdownPath);
-
 		try {
-			// Write the markdown file
-			await vscode.workspace.fs.writeFile(markdownUri, Buffer.from(markdownContent, "utf8"));
-
-			// Open the file in editor
-			const doc = await vscode.workspace.openTextDocument(markdownUri);
-			await vscode.window.showTextDocument(doc);
+			// Generate and show markdown
+			await MarkdownFileManager.generateAndShowMarkdown(handler, workspaceFolder);
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to create markdown file: ${error}`);
 		}
@@ -59,18 +48,13 @@ export function registerViewCommands(
 
 			// Handle General Notes - open markdown file
 			if (note.filePath === "/") {
-				const markdownPath = path.join(folder.uri.fsPath, ".notes.local.md");
-				const markdownUri = vscode.Uri.file(markdownPath);
+				const markdownPath = MarkdownFileManager.getMarkdownPath(folder);
 				
 				try {
-					const doc = await vscode.workspace.openTextDocument(markdownUri);
-					const editor = await vscode.window.showTextDocument(doc);
+					const editor = await MarkdownFileManager.openMarkdownFile(markdownPath);
 					
 					// Scroll to top
-					const topPosition = new vscode.Position(0, 0);
-					const topRange = new vscode.Range(topPosition, topPosition);
-					editor.selection = new vscode.Selection(topPosition, topPosition);
-					editor.revealRange(topRange, vscode.TextEditorRevealType.AtTop);
+					EditorNavigator.navigateToTop(editor);
 				} catch (error) {
 					vscode.window.showErrorMessage("Markdown file not found. Please use 'Open as Markdown' first.");
 				}
@@ -82,10 +66,7 @@ export function registerViewCommands(
 			const editor = await vscode.window.showTextDocument(document);
 
 			// Navigate to the note position
-			const position = new vscode.Position(note.startLine - 1, 0);
-			const range = new vscode.Range(position, position);
-			editor.selection = new vscode.Selection(position, position);
-			editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+			EditorNavigator.navigateToLine(editor, note.startLine - 1);
 		},
 	);
 
@@ -93,7 +74,7 @@ export function registerViewCommands(
 	const refreshTreeCommand = vscode.commands.registerCommand("vibe-notes.refreshTree", async () => {
 		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
 			const workspaceFolder = vscode.workspace.workspaceFolders[0];
-			const markdownPath = path.join(workspaceFolder.uri.fsPath, ".notes.local.md");
+			const markdownPath = MarkdownFileManager.getMarkdownPath(workspaceFolder);
 
 			try {
 				// Check if markdown file exists
@@ -102,10 +83,7 @@ export function registerViewCommands(
 				// If markdown exists, regenerate it (this will trigger TreeView refresh via watcher)
 				const handler = noteHandlers.get(workspaceFolder.uri.fsPath);
 				if (handler) {
-					const notes = await handler.readNotes();
-					const markdownContent = await generateMarkdownFileContent(notes, workspaceFolder);
-
-					await vscode.workspace.fs.writeFile(vscode.Uri.file(markdownPath), Buffer.from(markdownContent, "utf8"));
+					await MarkdownFileManager.generateAndSaveMarkdown(handler, workspaceFolder);
 				}
 			} catch {
 				// Markdown file doesn't exist, refresh TreeView directly
