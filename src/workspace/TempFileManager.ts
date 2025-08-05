@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs/promises";
+import { EditorSplitHelper } from "../util/EditorSplitHelper";
 
 export class TempFileManager {
 	private static readonly TEMP_DIR = ".notes/tmp";
@@ -32,9 +33,9 @@ export class TempFileManager {
 			// Write initial content to temp file
 			await fs.writeFile(tempFilePath, initialContent);
 
-			// Open the file in editor
+			// Open the file in editor with configured split mode
 			const document = await vscode.workspace.openTextDocument(tempFilePath);
-			const editor = await vscode.window.showTextDocument(document);
+			await EditorSplitHelper.showDocumentWithSplitMode(document);
 
 			// Store callback for this file
 			this.tempFileCallbacks.set(tempFilePath, callback);

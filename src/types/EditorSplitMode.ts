@@ -1,0 +1,1 @@
+export type EditorSplitMode = "none" | "horizontal" | "vertical";

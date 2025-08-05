@@ -8,5 +8,10 @@
 	"config.copyForLLMIncludeCode.markdownDescription": "AI/LLM用にコピーする際にソースコード本体のコードスニペットを含めるかどうか。\n\n**有効時:** 参照されているコードを含め、完全なコンテキストを提供します。\n\n**無効時:** ノートのコメントのみが含まれ、トークン使用量を削減できます。",
 	"config.showMarkdownPreamble.description": "Markdownファイル先頭に説明プリアンブルを表示",
 	"config.showMarkdownPreamble.markdownDescription": "Markdownファイルの先頭に編集方法の説明と生成日時を含むプリアンブルを表示します。\n\n**有効時:** 編集方法の説明とメタデータが含まれます。\n\n**無効時:** ノートの内容から直接始まります。",
+	"config.editorSplitMode.description": "ノート編集ウィンドウを開く際のエディタ分割方法",
+	"config.editorSplitMode.markdownDescription": "ノートを編集する際のエディタウィンドウの分割方法を制御します。\n\n**オプション:**\n- `none`: 現在のエディタで開く\n- `horizontal`: 横分割（デフォルト）\n- `vertical`: 縦分割",
+	"config.editorSplitMode.none": "現在のエディタで開く",
+	"config.editorSplitMode.horizontal": "横分割（デフォルト）",
+	"config.editorSplitMode.vertical": "縦分割",
 	"viewsContainers.activitybar.title": "Vibe Notes"
 }

@@ -49,6 +49,10 @@
 				"title": "Delete Note at Line"
 			},
 			{
+				"command": "vibe-notes.editNoteAtLineAsMarkdown",
+				"title": "Edit Note as Markdown"
+			},
+			{
 				"command": "vibe-notes.showMarkdown",
 				"title": "Open as Markdown",
 				"icon": "$(markdown)"
@@ -159,6 +163,18 @@
 					"default": true,
 					"description": "%config.showMarkdownPreamble.description%",
 					"markdownDescription": "%config.showMarkdownPreamble.markdownDescription%"
+				},
+				"vibe-notes.editorSplitMode": {
+					"type": "string",
+					"default": "horizontal",
+					"enum": ["none", "horizontal", "vertical"],
+					"enumDescriptions": [
+						"%config.editorSplitMode.none%",
+						"%config.editorSplitMode.horizontal%",
+						"%config.editorSplitMode.vertical%"
+					],
+					"description": "%config.editorSplitMode.description%",
+					"markdownDescription": "%config.editorSplitMode.markdownDescription%"
 				}
 			}
 		}

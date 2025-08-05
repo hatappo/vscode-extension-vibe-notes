@@ -36,21 +36,23 @@ export class NoteCodeLensProvider implements vscode.CodeLensProvider {
 				// Create range for the first line of the note
 				const range = new vscode.Range(note.startLine - 1, 0, note.startLine - 1, 0);
 
-				// Create Edit CodeLens
-				const editLens = new vscode.CodeLens(range, {
-					title: "$(edit) Edit",
-					command: "vibe-notes.editNoteAtLine",
-					arguments: [document.uri, note.startLine],
-				});
+				// Define code lens actions
+				const lensActions = [
+					{ icon: "trash", title: "Delete", command: "vibe-notes.deleteNoteAtLine" },
+					{ icon: "edit", title: "Edit", command: "vibe-notes.editNoteAtLine" },
+					{ icon: "edit", title: "Edit as Markdown", command: "vibe-notes.editNoteAtLineAsMarkdown" },
+				];
 
-				// Create Delete CodeLens
-				const deleteLens = new vscode.CodeLens(range, {
-					title: "$(trash) Delete",
-					command: "vibe-notes.deleteNoteAtLine",
-					arguments: [document.uri, note.startLine],
-				});
+				// Create code lenses
+				const lenses = lensActions.map(action => 
+					new vscode.CodeLens(range, {
+						title: `$(${action.icon}) ${action.title}`,
+						command: action.command,
+						arguments: [document.uri, note.startLine],
+					})
+				);
 
-				codeLenses.push(editLens, deleteLens);
+				codeLenses.push(...lenses);
 			}
 		}
 

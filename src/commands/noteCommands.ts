@@ -4,6 +4,8 @@ import { NoteFileHandler } from "../notes/NoteFileHandler";
 import { TempFileManager } from "../workspace/TempFileManager";
 import { getCurrentHandler, findNoteAtCursor, findNoteAtLine } from "../notes/NoteFinder";
 import { editNote, deleteNote } from "./noteOperations";
+import { MarkdownFileManager } from "../formatting/MarkdownFileManager";
+import { EditorNavigator } from "../util/EditorNavigator";
 
 /**
  * Register all note-related commands
@@ -125,6 +127,39 @@ Close without saving to cancel.
 		},
 	);
 
+	// Command: Edit note as markdown at line (for CodeLens)
+	const editNoteAtLineAsMarkdownCommand = vscode.commands.registerCommand(
+		"vibe-notes.editNoteAtLineAsMarkdown",
+		async (uri: vscode.Uri, line: number) => {
+			const { note, handler, workspaceFolder } = await findNoteAtLine(uri, line, noteHandlers);
+			if (!note || !handler || !workspaceFolder) {
+				vscode.window.showInformationMessage("No note found at line");
+				return;
+			}
+
+			try {
+				// Generate and save markdown
+				const markdownPath = await MarkdownFileManager.generateAndSaveMarkdown(handler, workspaceFolder);
+				
+				// Open the file
+				const editor = await MarkdownFileManager.openMarkdownFile(markdownPath);
+				
+				// Get the content to search for the note
+				const markdownContent = editor.document.getText();
+				
+				// Find the note in the markdown
+				const targetLine = MarkdownFileManager.findNoteInMarkdown(markdownContent, note);
+				
+				if (targetLine !== -1) {
+					// Navigate to the note position
+					EditorNavigator.navigateToLine(editor, targetLine);
+				}
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to create markdown file: ${error}`);
+			}
+		},
+	);
+
 	// Register all commands
 	context.subscriptions.push(
 		addNoteCommand,
@@ -132,5 +167,6 @@ Close without saving to cancel.
 		deleteNoteAtCursorCommand,
 		editNoteAtLineCommand,
 		deleteNoteAtLineCommand,
+		editNoteAtLineAsMarkdownCommand,
 	);
 }

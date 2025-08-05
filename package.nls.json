@@ -8,5 +8,10 @@
 	"config.copyForLLMIncludeCode.markdownDescription": "Include actual source code snippets when copying notes for AI/LLM.\n\n**When enabled:** Notes include the actual code being referenced, providing full context.\n\n**When disabled:** Only note comments are included, token usage can be reduced.",
 	"config.showMarkdownPreamble.description": "Show instructional preamble in markdown files",
 	"config.showMarkdownPreamble.markdownDescription": "Show instructional preamble with editing tips and generation date at the top of markdown files.\n\n**When enabled:** Markdown files include helpful instructions and metadata.\n\n**When disabled:** Markdown files start directly with notes content.",
+	"config.editorSplitMode.description": "How to split the editor when opening note editing window",
+	"config.editorSplitMode.markdownDescription": "Controls how the editor window is split when opening a note for editing.\n\n**Options:**\n- `none`: Opens in the current editor\n- `horizontal`: Splits the editor horizontally (default)\n- `vertical`: Splits the editor vertically",
+	"config.editorSplitMode.none": "Open in current editor",
+	"config.editorSplitMode.horizontal": "Split horizontally (default)",
+	"config.editorSplitMode.vertical": "Split vertically",
 	"viewsContainers.activitybar.title": "Vibe Notes"
 }
