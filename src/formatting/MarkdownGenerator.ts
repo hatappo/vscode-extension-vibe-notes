@@ -21,14 +21,29 @@ export async function generateMarkdownFileContent(
 	
 	if (showPreamble) {
 		const now = new Date().toLocaleString();
-		return `<!-- 
-You can fully edit as markdown!
+		const isJapanese = vscode.env.language.startsWith("ja");
+		
+		const instructions = isJapanese
+			? `<!-- 
+Markdownとして自由に編集できます
+- 既存のノートの編集、新しいノートの追加、ノートの削除、行番号の変更が可能です
+- プロジェクト全体やファイル横断的なトピックには "## /" を使用してください
+- 右クリックメニューまたはコマンドパレットから "Add Note" でソースコードにノートを追加できます
+- ファイルを保存（"Ctrl+S" / "Cmd+S"）するとすべての変更が適用されます
+
+生成日時: ${now}
+-->`
+			: `<!-- 
+You can fully edit as markdown
 - Edit existing notes, add new notes, delete notes, or change line numbers
 - Use "## /" for general notes (project-wide or cross-file topics)
+- Add notes to your source code via right-click menu or Command Palette ("Add Note")
 - Save the file ("Ctrl+S" / "Cmd+S") to apply all changes
 
 Generated: ${now}
--->
+-->`;
+		
+		return `${instructions}
 
 ${enhancedMarkdown}`;
 	} else {

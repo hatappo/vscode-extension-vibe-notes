@@ -35,7 +35,14 @@ export class TempFileManager {
 
 			// Open the file in editor with configured split mode
 			const document = await vscode.workspace.openTextDocument(tempFilePath);
-			await EditorSplitHelper.showDocumentWithSplitMode(document);
+			const editor = await EditorSplitHelper.showDocumentWithSplitMode(document);
+			
+			// Move cursor to end of file
+			const lastLine = document.lineCount - 1;
+			const lastLineText = document.lineAt(lastLine);
+			const endPosition = new vscode.Position(lastLine, lastLineText.text.length);
+			editor.selection = new vscode.Selection(endPosition, endPosition);
+			editor.revealRange(new vscode.Range(endPosition, endPosition));
 
 			// Store callback for this file
 			this.tempFileCallbacks.set(tempFilePath, callback);
