@@ -2,6 +2,8 @@
 
 Private code notes that vibe with your workflow - never touching your source files or git history. Perfect for personal notes, code reviews, and AI-assisted coding workflows.
 
+Japanese Documentation: [README.ja.md](./README.ja.md)
+
 ## Features
 
 - Add notes to any line **without making any changes to the source file**
