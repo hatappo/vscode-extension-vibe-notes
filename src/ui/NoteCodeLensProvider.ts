@@ -38,9 +38,9 @@ export class NoteCodeLensProvider implements vscode.CodeLensProvider {
 
 				// Define code lens actions
 				const lensActions = [
-					{ icon: "trash", title: "Delete", command: "vibe-notes.deleteNoteAtLine" },
-					{ icon: "edit", title: "Edit", command: "vibe-notes.editNoteAtLine" },
-					{ icon: "edit", title: "Edit as Markdown", command: "vibe-notes.editNoteAtLineAsMarkdown" },
+					{ icon: "trash", title: "Delete Note", command: "vibe-notes.deleteNoteAtLine" },
+					{ icon: "edit", title: "Edit Note", command: "vibe-notes.editNoteAtLine" },
+					{ icon: "edit", title: "Edit Note as Markdown", command: "vibe-notes.editNoteAtLineAsMarkdown" },
 				];
 
 				// Create code lenses
