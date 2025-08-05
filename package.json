@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName%",
 	"description": "%extension.description%",
 	"publisher": "hatappo",
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"icon": "media/icons/icon.png",
 	"license": "MIT",
 	"repository": {
@@ -197,7 +197,7 @@
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
 		"package": "npm run check-types && npm run lint && node esbuild.js --production",
 		"vscode:login": "vsce login",
-		"vscode:publish": "vsce publish",
+		"vscode:publish": "npm run package && vsce publish",
 		"compile-tests": "tsc -p . --outDir out",
 		"watch-tests": "tsc -p . -w --outDir out",
 		"pretest": "npm run compile-tests && npm run compile && npm run lint",
