@@ -1,3 +1,0 @@
-src/commands/noteCommands.ts#L18 "エディタを開くときにエディタを分割して開くようにする。縦に分割するか横に分割するか、あるいは分割しないかは Config から設定可能にします。デフォルトは横に分割です。"
-src/commands/noteCommands.ts#L83 "エディタを開くときにエディタを分割して開くようにする。縦に分割するか横に分割するか、あるいは分割しないかは Config から設定可能にします。デフォルトは横に分割です。"
-src/ui/NoteCodeLensProvider.ts#L39-51 "Code Lens に Edit as md ボタンと機能を追加します。\nこのボタンをクリックすると、 Markdown を生成し、エディタで開き、該当のノートのコメント箇所までカーソルとスクロールを移動しておきます。\nまた、 Code Lens での並びは Delete, Edit, Edit as md にします。"
