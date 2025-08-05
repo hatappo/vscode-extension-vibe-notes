@@ -30,51 +30,51 @@
 		"commands": [
 			{
 				"command": "vibe-notes.addNote",
-				"title": "Add Note to Line"
+				"title": "Vibe Notes: Add Note to Line"
 			},
 			{
 				"command": "vibe-notes.editNoteAtCursor",
-				"title": "Edit Note"
+				"title": "Vibe Notes: Edit Note"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtCursor",
-				"title": "Delete Note"
+				"title": "Vibe Notes: Delete Note"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLine",
-				"title": "Edit Note at Line"
+				"title": "Vibe Notes: Edit Note at Line"
 			},
 			{
 				"command": "vibe-notes.deleteNoteAtLine",
-				"title": "Delete Note at Line"
+				"title": "Vibe Notes: Delete Note at Line"
 			},
 			{
 				"command": "vibe-notes.editNoteAtLineAsMarkdown",
-				"title": "Edit Note as Markdown"
+				"title": "Vibe Notes: Edit Note as Markdown"
 			},
 			{
 				"command": "vibe-notes.showMarkdown",
-				"title": "Open as Markdown",
+				"title": "Vibe Notes: Open as Markdown",
 				"icon": "$(markdown)"
 			},
 			{
 				"command": "vibe-notes.refreshTree",
-				"title": "Refresh",
+				"title": "Vibe Notes: Refresh",
 				"icon": "$(refresh)"
 			},
 			{
 				"command": "vibe-notes.saveToGitNotes",
-				"title": "Save to Git Notes",
+				"title": "Vibe Notes: Save to Git Notes",
 				"icon": "$(git-branch)"
 			},
 			{
 				"command": "vibe-notes.setupGitignore",
-				"title": "Setup Gitignore",
+				"title": "Vibe Notes: Setup Gitignore",
 				"icon": "$(heart)"
 			},
 			{
 				"command": "vibe-notes.copyForLLM",
-				"title": "Copy for LLM",
+				"title": "Vibe Notes: Copy for LLM",
 				"icon": "$(robot)"
 			}
 		],
