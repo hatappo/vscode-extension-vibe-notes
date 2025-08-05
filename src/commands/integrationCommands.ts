@@ -56,8 +56,8 @@ export function registerIntegrationCommands(
 				return;
 			}
 
-			// Get the raw content
-			const content = await handler.getRawContent();
+			// Generate markdown content without preamble
+			const content = await generateEnhancedMarkdown(notes, workspaceFolder, true, false);
 
 			// Execute git notes command using stdin for security
 			await new Promise<void>((resolve, reject) => {
