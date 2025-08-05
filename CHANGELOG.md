@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.4.4] - 2025-08-05
+
+### Changed
+- Auto-position cursor at end of file when adding or editing notes
+- Markdown preamble now supports Japanese locale
+- Added instruction for adding notes via right-click menu or Command Palette
+
 ## [0.4.0] - 2025-08-05
 
 ### Added

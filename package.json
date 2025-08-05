@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName%",
 	"description": "%extension.description%",
 	"publisher": "hatappo",
-	"version": "0.4.3",
+	"version": "0.4.4",
 	"icon": "media/icons/icon.png",
 	"license": "MIT",
 	"repository": {
